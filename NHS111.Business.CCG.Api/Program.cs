@@ -1,6 +1,5 @@
 ﻿
 namespace NHS111.Business.CCG.Api {
-    using Autofac.Extensions.DependencyInjection;
     using Microsoft.AspNetCore;
     using Microsoft.AspNetCore.Hosting;
 
@@ -11,7 +10,6 @@ namespace NHS111.Business.CCG.Api {
 
         public static IWebHost BuildWebHost(string[] args) =>
             WebHost.CreateDefaultBuilder(args)
-                .ConfigureServices(services => services.AddAutofac())
                 .UseStartup<Startup>()
                 .Build();
     }
