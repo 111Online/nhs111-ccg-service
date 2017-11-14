@@ -6,7 +6,6 @@ $json = Get-Content $jsonPath -raw | ConvertFrom-Json
 
 $json.connectionstring=[Environment]::GetEnvironmentVariable("connectionstring")
 $json.tablereference=[Environment]::GetEnvironmentVariable("tablereference")
-$json.NhsPathwaysConfigurations.ApplicationUrl=[Environment]::GetEnvironmentVariable("NhsPathwaysConfigurations.ApplicationUrl")
 
 $json | ConvertTo-Json  | Set-Content $jsonPath
 

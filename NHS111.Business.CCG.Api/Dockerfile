@@ -6,5 +6,5 @@ WORKDIR /app
 COPY./bin/Release/netcoreapp2.0/publish.
 COPY start.ps1.
 
-EXPOSE 91
-ENV ASPNETCORE_URLS http://0.0.0.0:91
+EXPOSE 92
+ENV ASPNETCORE_URLS http://0.0.0.0:92
