@@ -14,6 +14,7 @@ using Microsoft.WindowsAzure.Storage;
 using Microsoft.WindowsAzure.Storage.Auth;
 using NHS111.Domain.CCG;
 using CsvHelper;
+using CsvHelper.TypeConversion;
 using Microsoft.WindowsAzure.Storage.Table;
 using NHS111.Domain.CCG.Models;
 using Nito.AsyncEx;
@@ -25,18 +26,22 @@ namespace NHS111.DataImport.CCG
     {
         private static string _accountname;
         private static string _tableReference;
+        private static string _ccgtableReference;
         private static string _accountKey;
-        private static string _csvFilePath;
+        private static string _postcodeCsvFilePath;
+        private static string _ccgCsvFilePath;
         private static int _counter;
         private static int _recordCount;
+        private static int _terminatedPostcodesCount;
         private static Dictionary<string, PostcodeRecord> _ccgLookup = new Dictionary<string, PostcodeRecord>();
-
         static void Main(string[] args)
         {
+
             Console.WriteLine("Beginning Data import");
+            LoadDefaultgSettings();
             LoadSettings(args);
             //LoadDebugSettings();
-            LoadCCGLookupdata(@"C:\Users\jtiffen\Downloads\ons ccg area2.csv");
+            LoadCCGLookupdata(_ccgCsvFilePath).Wait();
             var clock = new Stopwatch();
             clock.Start();
             RunImport().Wait();
@@ -47,21 +52,50 @@ namespace NHS111.DataImport.CCG
 
         }
 
-        public static void LoadCCGLookupdata(string csvFilePath)
+        public static async Task LoadCCGLookupdata(string csvFilePath)
         {
+            var storageAccount = new CloudStorageAccount(new StorageCredentials(_accountname, _accountKey), true);
+            var tableClient = storageAccount.CreateCloudTableClient();
+            var stptable = tableClient.GetTableReference(_ccgtableReference);
             var csvlookup = new CsvReader(new StreamReader(csvFilePath));
             csvlookup.Read();
             csvlookup.ReadHeader();
+            var ccgs = new List<STPEntity>();
+            var batch = new TableBatchOperation();
+
             while (csvlookup.Read())
             {
-                _ccgLookup.Add(csvlookup.GetField<string>("ONSCODE"), new PostcodeRecord()
+                batch.Add(TableOperation.InsertOrReplace(new STPEntity()
                 {
-                    AppName = csvlookup.GetField<string>("Product"),
-                    StpName = csvlookup.GetField<string>("STp"),
-                    CcgName = csvlookup.GetField<string>("CCG"),
-                    CCGId = csvlookup.GetField<string>("ONSCODE")
-                });
+                    PartitionKey = "CCGs",
+                    RowKey = csvlookup.GetField<string>("FID"),
+                    CCGId = csvlookup.GetField<string>("CCG16CD"),
+                    STPId = csvlookup.GetField<string>("STP17CD"),
+                    STPName = csvlookup.GetField<string>("STP17NM"),
+                    CCGName = csvlookup.GetField<string>("CCG16NM"),
+                    ProductName = csvlookup.GetField<string>("Product"),
+                    LiveDate = csvlookup.GetField<DateTime?>("LiveDate"),
+                    ServiceIdWhitelist = new ServiceIdWhitelist(csvlookup.GetField<string>("ServiceIdWhitelist"))
+                }));
+
+                if (!_ccgLookup.ContainsKey(csvlookup.GetField<string>("CCG16CD")))
+                {
+                    _ccgLookup.Add(csvlookup.GetField<string>("CCG16CD"), new PostcodeRecord()
+                    {
+                        AppName = csvlookup.GetField<string>("Product"),
+                        StpName = csvlookup.GetField<string>("STP17NM"),
+                        CcgName = csvlookup.GetField<string>("CCG16NM"),
+                        CCGId = csvlookup.GetField<string>("CCG16CD")
+                    });
+                }
+                if (batch.Count % 100 == 0)
+                {
+                    await stptable.ExecuteBatchAsync(batch);
+                    batch = new TableBatchOperation();
+                }
             }
+            if (batch.Count > 0) await stptable.ExecuteBatchAsync(batch);
+
         }
 
         public static async Task  RunImport()
@@ -69,18 +103,19 @@ namespace NHS111.DataImport.CCG
             var storageAccount = new CloudStorageAccount(new StorageCredentials(_accountname, _accountKey), true);
             var tableClient = storageAccount.CreateCloudTableClient();
             var table = tableClient.GetTableReference(_tableReference);
-            var csv = new CsvReader(new StreamReader(_csvFilePath));
+            var csv = new CsvReader(new StreamReader(_postcodeCsvFilePath));
             var batchsizeMax = 100;
             var batch = new TableBatchOperation();
+            _terminatedPostcodesCount = 0;
             var i = 0;
             csv.Read();
             csv.ReadHeader();
-            _recordCount = File.ReadLines(_csvFilePath).Count() -1;
+            _recordCount = File.ReadLines(_postcodeCsvFilePath).Count() -1;
             var tasks = new List<Task>();
             while (csv.Read())
             {
                 var termenatedDate = "";
-                csv.TryGetField<string>("doTerm", out termenatedDate);
+                csv.TryGetField<string>("doterm", out termenatedDate);
 
                 if (String.IsNullOrWhiteSpace(termenatedDate))
                 {
@@ -115,6 +150,7 @@ namespace NHS111.DataImport.CCG
                         tasks = new List<Task>();
                     }
                 }
+                else _terminatedPostcodesCount++;
             }
             //run remaining records
             tasks.Add(ImportBatch(table, batch, i));
@@ -127,18 +163,27 @@ namespace NHS111.DataImport.CCG
            var iportedCount = await table.ExecuteBatchAsync(batch);
             var newcount = _counter + iportedCount.Count;
             _counter = newcount;
-           // await table.ExecuteBatchAsync(batch);
-           // return number;
-            Console.WriteLine("Imported " + _counter + " records of " + _recordCount);
+            Console.WriteLine("Imported " + _counter + " records ("+_terminatedPostcodesCount +" terminated) of " + _recordCount + " (" + CalcuatePercentDone() + "%)");
         }
 
+        public static string CalcuatePercentDone()
+        {
+            return ((((decimal) _counter + (decimal) _terminatedPostcodesCount)
+                     / (decimal) _recordCount) * 100m).ToString("0.00");
+        }
 
+       public static void LoadDefaultgSettings()
+        {
+            _tableReference= "ccgTest";
+            _accountname = "111storestd";
+            _ccgtableReference = "stpTest";
+        }
         public static void LoadDebugSettings()
         {
             _accountname = "111storestd";
             _tableReference = "ccgTest";
-            _accountKey = @"REDACTED";
-            _csvFilePath = @"c:\path\test.csv";
+            _accountKey = @"TXXoIUj4ySXovV0G42CCPsLzLwcbztDvGqOZpq5Vj/+oxB7sNMgcU+uuPPZ65xzwHu66KxG5XDfKQLO7YeER+A==";
+            _postcodeCsvFilePath = @"C:\Users\jtiffen\Downloads\ccgstagingtest.csv";
         }
         public static void LoadSettings(string[] args)
         {
@@ -154,13 +199,23 @@ namespace NHS111.DataImport.CCG
                     _tableReference = args[i].Replace("-TableRef=","");
                 }
 
+                if (args[i].StartsWith("-ccgTableRef="))
+                {
+                    _ccgtableReference = args[i].Replace("-ccgTableRef=", "");
+                }
+
+                if (args[i].StartsWith("-ccgCsvFilePath="))
+                {
+                    _ccgCsvFilePath = args[i].Replace("-ccgCsvFilePath=", "");
+                }
+
                 if (args[i].StartsWith("-AccountKey="))
                 {
                     _accountKey = args[i].Replace("-AccountKey=","");
                 }
                 if (args[i].StartsWith("-CSVFilePath="))
                 {
-                    _csvFilePath = args[i].Replace("-CSVFilePath=","");
+                    _postcodeCsvFilePath = args[i].Replace("-CSVFilePath=","");
                 }
             }
 
