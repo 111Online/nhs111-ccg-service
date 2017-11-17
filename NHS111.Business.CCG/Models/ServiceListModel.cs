@@ -13,7 +13,7 @@ namespace NHS111.Business.CCG.Models
         }
         public ServiceListModel(string serviceidList) : base()
         {
-            this.AddRange(serviceidList.Split('|').ToList());
+            if(!String.IsNullOrWhiteSpace(serviceidList)) this.AddRange(serviceidList.Split('|').ToList());
         }
         public override string ToString()
         {
