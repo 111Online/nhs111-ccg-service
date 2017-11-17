@@ -69,10 +69,9 @@ namespace NHS111.Business.CCG.Services {
             STPEntity stpResult = new STPEntity();
             if (ccgResult == null)
                 return null;
-            if (!String.IsNullOrEmpty(ccgResult.CCGId))
-            { 
-                stpResult = await _stpRepository.Get(ccgResult.CCGId);
-            }
+
+            if(String.IsNullOrEmpty(ccgResult.CCGId)) throw new ArgumentOutOfRangeException("Postcode does not have CCGId specified");
+            stpResult = await _stpRepository.Get(ccgResult.CCGId);
             return Map(ccgResult, stpResult);
         }
 
