@@ -18,8 +18,9 @@ namespace NHS111.Business.CCG.Api {
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services) {
             services.AddMvc();
-            services.AddTransient<AzureAccountSettings, AzureAccountSettings>(p => new AzureAccountSettings(Configuration["connection"], Configuration["table"]));
+            services.AddTransient<AzureAccountSettings, AzureAccountSettings>(p => new AzureAccountSettings(Configuration["connection"], Configuration["ccgtable"], Configuration["stptable"]));
             services.AddTransient<ICCGRepository, CCGRepository>();
+            services.AddTransient<ISTPRepository, STPRepository>();
             services.AddTransient<ICCGService, CCGService>();
         }
 

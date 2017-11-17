@@ -19,7 +19,7 @@ namespace NHS111.Domain.CCG {
             var storageAccount = CloudStorageAccount.Parse(settings.ConnectionString);
 
             var tableClient = storageAccount.CreateCloudTableClient();
-            _table = tableClient.GetTableReference(settings.TableReference);
+            _table = tableClient.GetTableReference(settings.CCGTableReference);
         }
 
         public async Task<CCGEntity> Get(string postcode) {

@@ -12,8 +12,9 @@ namespace NHS111.Business.CCG.Tests {
     public class CCGServiceTests {
         [SetUp]
         public void SetUp() {
-            _mockRepo = new Mock<ICCGRepository>();
-            _sut = new CCGService(_mockRepo.Object);
+            _mockccgRepo = new Mock<ICCGRepository>();
+            _mockstpRepo = new Mock<ISTPRepository>();
+            _sut = new CCGService(_mockccgRepo.Object, _mockstpRepo.Object);
         }
 
         [Test(Description = "The CCG service should throw an ArgumentException if an invalid postcode is provided.")]
@@ -24,7 +25,7 @@ namespace NHS111.Business.CCG.Tests {
         [Test(Description="The CCG service should return a valid CCG model when one is returned from the repo.")]
         public async Task Get_WithExistingPostcode_ReturnsCCG() {
             var repoResult = new CCGEntity { Postcode = "XXX", App = "some app", CCG = "some ccg" };
-            _mockRepo.Setup(r => r.Get(It.IsAny<string>())).Returns(Task.FromResult(repoResult));
+            _mockccgRepo.Setup(r => r.Get(It.IsAny<string>())).Returns(Task.FromResult(repoResult));
             var actualResult = await _sut.Get(_validPostcode);
             Assert.AreEqual(repoResult.Postcode, actualResult.Postcode, TestContext.CurrentContext.Test.Expectation() + " Postcodes didn't match");
             Assert.AreEqual(repoResult.App, actualResult.App, TestContext.CurrentContext.Test.Expectation() + " App didn't match");
@@ -33,7 +34,7 @@ namespace NHS111.Business.CCG.Tests {
 
         [Test(Description = "The CCG service should return null when null is returned from the repo.")]
         public async Task Get_WithNonexistingPostcode_ReturnsNull() {
-            _mockRepo.Setup(r => r.Get(It.IsAny<string>())).Returns(Task.FromResult<CCGEntity>(null));
+            _mockccgRepo.Setup(r => r.Get(It.IsAny<string>())).Returns(Task.FromResult<CCGEntity>(null));
             var actualResult = await _sut.Get(_validPostcode);
             Assert.IsNull(actualResult, TestContext.CurrentContext.Test.Expectation());
         }
@@ -42,13 +43,14 @@ namespace NHS111.Business.CCG.Tests {
         public async Task Get_WithAnyPostcode_NormalisesThePostcodeBeforeCallingRepo() {
             var nonNormalisedPostcode = " sO66  6iI  ";
             await _sut.Get(nonNormalisedPostcode);
-            _mockRepo.Verify(r => r.Get(It.Is<string>(s => s == "SO666II")));
+            _mockccgRepo.Verify(r => r.Get(It.Is<string>(s => s == "SO666II")));
         }
 
         private string _validPostcode = "SO66 6UU";
         private string _invalidPostcode = "XXXX XXX";
 
-        private Mock<ICCGRepository> _mockRepo;
+        private Mock<ICCGRepository> _mockccgRepo;
+        private Mock<ISTPRepository> _mockstpRepo;
         private CCGService _sut;
     }
 }

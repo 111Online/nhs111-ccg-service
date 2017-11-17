@@ -75,7 +75,7 @@ namespace NHS111.DataImport.CCG
                     CCGName = csvlookup.GetField<string>("CCG16NM"),
                     ProductName = csvlookup.GetField<string>("Product"),
                     LiveDate = csvlookup.GetField<DateTime?>("LiveDate"),
-                    ServiceIdWhitelist = new ServiceIdWhitelist(csvlookup.GetField<string>("ServiceIdWhitelist"))
+                    ServiceIdWhitelist = csvlookup.GetField<string>("ServiceIdWhitelist")
                 }));
 
                 if (!_ccgLookup.ContainsKey(csvlookup.GetField<string>("CCG16CD")))
@@ -159,8 +159,7 @@ namespace NHS111.DataImport.CCG
 
         public static async Task ImportBatch(CloudTable table, TableBatchOperation batch, int number)
         {
-
-           var iportedCount = await table.ExecuteBatchAsync(batch);
+            var iportedCount = await table.ExecuteBatchAsync(batch);
             var newcount = _counter + iportedCount.Count;
             _counter = newcount;
             Console.WriteLine("Imported " + _counter + " records ("+_terminatedPostcodesCount +" terminated) of " + _recordCount + " (" + CalcuatePercentDone() + "%)");
