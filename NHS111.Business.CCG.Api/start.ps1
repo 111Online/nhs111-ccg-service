@@ -4,8 +4,8 @@ Write-Output "Loading json file from $jsonPath"
 
 $json = Get-Content $jsonPath -raw | ConvertFrom-Json
 
-$json.connection=[Environment]::GetEnvironmentVariable("connectionstring")
-$json.table=[Environment]::GetEnvironmentVariable("tablereference")
+$json.connectionstring=[Environment]::GetEnvironmentVariable("connectionstring")
+$json.tablereference=[Environment]::GetEnvironmentVariable("ccgtablereference")
 
 $json | ConvertTo-Json  | Set-Content $jsonPath
 
