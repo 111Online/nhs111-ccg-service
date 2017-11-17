@@ -9,5 +9,7 @@ namespace NHS111.Business.CCG.Models
         public string STPName { get; set; }
 
         public ServiceListModel ServiceIdWhitelist { get; set; }
+
+        public ServiceListModel ITKServiceIdWhitelist { get; set; }
     }
 }

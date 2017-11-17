@@ -55,6 +55,7 @@ namespace NHS111.Business.CCG.Services {
                 CCG = ccgEntity.CCG,
                 Postcode = ccgEntity.Postcode,
                 ServiceIdWhitelist = new ServiceListModel(stpEntity.ServiceIdWhitelist),
+                ITKServiceIdWhitelist = new ServiceListModel(stpEntity.ITKServiceIdWhitelist),
                 STPName = stpEntity.STPName
             };
         }

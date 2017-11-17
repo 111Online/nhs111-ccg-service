@@ -75,7 +75,8 @@ namespace NHS111.DataImport.CCG
                     CCGName = csvlookup.GetField<string>("CCG16NM"),
                     ProductName = csvlookup.GetField<string>("Product"),
                     LiveDate = csvlookup.GetField<DateTime?>("LiveDate"),
-                    ServiceIdWhitelist = csvlookup.GetField<string>("ServiceIdWhitelist")
+                    ServiceIdWhitelist = csvlookup.GetField<string>("ServiceIdWhitelist"),
+                    ITKServiceIdWhitelist = csvlookup.GetField<string>("ITKServiceIdWhitelist")
                 }));
 
                 if (!_ccgLookup.ContainsKey(csvlookup.GetField<string>("CCG16CD")))
