@@ -2,7 +2,7 @@
   "profiles": {
     "NHS111.DataImport.CCG": {
       "commandName": "Project",
-      "commandLineArgs": "-AccountName=111storestd -TableRef=ccgTest -AccountKey=\"TXXoIUj4ySXovV0G42CCPsLzLwcbztDvGqOZpq5Vj/+oxB7sNMgcU+uuPPZ65xzwHu66KxG5XDfKQLO7YeER+A==\" -CSVFilePath=\"C:\\Users\\jtiffen\\Downloads\\ONS_Postcode_Directory_Latest_England.csv\" -ccgCsvFilePath=\"F:\\DASProjects\\Development\\nhs111-ccg-service\\NHS111.DataImport.CCG\\CCGData.csv\""
+      "commandLineArgs": ""
     }
   }
 }
