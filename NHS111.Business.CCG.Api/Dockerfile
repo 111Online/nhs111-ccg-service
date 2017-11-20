@@ -3,7 +3,7 @@ ENTRYPOINT ["powershell", "./start.ps1"]
 
 WORKDIR /inetpub/wwwroot
 
-COPY ./bin/Release/netcoreapp2.0/publish .
+COPY ./bin/Release/netcoreapp2.0 .
 COPY start.ps1 .
 
 EXPOSE 92
