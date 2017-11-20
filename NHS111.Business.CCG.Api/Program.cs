@@ -10,6 +10,7 @@ namespace NHS111.Business.CCG.Api {
 
         public static IWebHost BuildWebHost(string[] args) =>
             WebHost.CreateDefaultBuilder(args)
+                .UseIISIntegration()
                 .UseStartup<Startup>()
                 .Build();
     }
