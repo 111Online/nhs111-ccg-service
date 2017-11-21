@@ -38,7 +38,7 @@ namespace NHS111.DataImport.CCG
         {
 
             Console.WriteLine("Beginning Data import");
-            LoadDefaultSettings();
+
             LoadSettings(args);
 
             LoadCCGLookupdata(_ccgCsvFilePath).Wait();
@@ -161,7 +161,7 @@ namespace NHS111.DataImport.CCG
         public static async Task ImportBatch(CloudTable table, TableBatchOperation batch, int number)
         {
             var importedCount = await table.ExecuteBatchAsync(batch);
-            var newcount = _counter + iportedCount.Count;
+            var newcount = _counter + importedCount.Count;
             _counter = newcount;
             Console.WriteLine("Imported " + _counter + " records ("+_terminatedPostcodesCount +" terminated) of " + _recordCount + " (" + CalcuatePercentDone() + "%)");
         }
@@ -170,13 +170,6 @@ namespace NHS111.DataImport.CCG
         {
             return ((((decimal) _counter + (decimal) _terminatedPostcodesCount)
                      / (decimal) _recordCount) * 100m).ToString("0.00");
-        }
-
-       public static void LoadDefaultSettings()
-        {
-            _tableReference= "ccgTest";
-            _accountname = "111storestd";
-            _ccgtableReference = "stpTest";
         }
 
         private static string NormalisePostcode(string postcode)
