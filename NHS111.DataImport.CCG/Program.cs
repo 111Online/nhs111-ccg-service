@@ -38,9 +38,9 @@ namespace NHS111.DataImport.CCG
         {
 
             Console.WriteLine("Beginning Data import");
-            LoadDefaultgSettings();
+            LoadDefaultSettings();
             LoadSettings(args);
-            //LoadDebugSettings();
+
             LoadCCGLookupdata(_ccgCsvFilePath).Wait();
             var clock = new Stopwatch();
             clock.Start();
@@ -160,7 +160,7 @@ namespace NHS111.DataImport.CCG
 
         public static async Task ImportBatch(CloudTable table, TableBatchOperation batch, int number)
         {
-            var iportedCount = await table.ExecuteBatchAsync(batch);
+            var importedCount = await table.ExecuteBatchAsync(batch);
             var newcount = _counter + iportedCount.Count;
             _counter = newcount;
             Console.WriteLine("Imported " + _counter + " records ("+_terminatedPostcodesCount +" terminated) of " + _recordCount + " (" + CalcuatePercentDone() + "%)");
@@ -172,18 +172,11 @@ namespace NHS111.DataImport.CCG
                      / (decimal) _recordCount) * 100m).ToString("0.00");
         }
 
-       public static void LoadDefaultgSettings()
+       public static void LoadDefaultSettings()
         {
             _tableReference= "ccgTest";
             _accountname = "111storestd";
             _ccgtableReference = "stpTest";
-        }
-        public static void LoadDebugSettings()
-        {
-            _accountname = "111storestd";
-            _tableReference = "ccgTest";
-            _accountKey = @"TXXoIUj4ySXovV0G42CCPsLzLwcbztDvGqOZpq5Vj/+oxB7sNMgcU+uuPPZ65xzwHu66KxG5XDfKQLO7YeER+A==";
-            _postcodeCsvFilePath = @"C:\Users\jtiffen\Downloads\ccgstagingtest.csv";
         }
 
         private static string NormalisePostcode(string postcode)
