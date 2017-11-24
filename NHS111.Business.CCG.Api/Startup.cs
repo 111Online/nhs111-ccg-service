@@ -1,7 +1,6 @@
 ﻿
 
 namespace NHS111.Business.CCG.Api {
-    using Autofac;
     using Domain.CCG;
     using Microsoft.AspNetCore.Builder;
     using Microsoft.AspNetCore.Hosting;
@@ -16,17 +15,13 @@ namespace NHS111.Business.CCG.Api {
 
         public IConfiguration Configuration { get; }
 
-        public void ConfigureContainer(ContainerBuilder builder) {
-            builder.Register(c => new AzureAccountSettings(Configuration["connection"], Configuration["table"]))
-                .As<AzureAccountSettings>()
-                .InstancePerDependency();
-            builder.RegisterType<CCGRepository>().As<ICCGRepository>();
-            builder.RegisterType<CCGService>().As<ICCGService>();
-        }
-
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services) {
             services.AddMvc();
+            services.AddTransient<AzureAccountSettings, AzureAccountSettings>(p => new AzureAccountSettings(Configuration["connection"], Configuration["ccgtable"], Configuration["stptable"]));
+            services.AddTransient<ICCGRepository, CCGRepository>();
+            services.AddTransient<ISTPRepository, STPRepository>();
+            services.AddTransient<ICCGService, CCGService>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

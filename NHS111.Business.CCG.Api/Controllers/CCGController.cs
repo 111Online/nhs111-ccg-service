@@ -25,6 +25,20 @@ namespace NHS111.Business.CCG.Api.Controllers {
             return Ok(result);
         }
 
+        [HttpGet("Details/{postcode}")]
+        public async Task<IActionResult> GetDetails(string postcode)
+        {
+            if (IsBadRequest(postcode))
+                return BadRequest();
+
+            var result = await _service.GetDetails(postcode);
+
+            if (result == null)
+                return NotFound();
+
+            return Ok(result);
+        }
+
         private static bool IsBadRequest(string postcode) {
             return string.IsNullOrEmpty(postcode);
         }
