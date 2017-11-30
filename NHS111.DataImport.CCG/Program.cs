@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.Tracing;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Reflection.Metadata;
@@ -19,6 +20,7 @@ using Microsoft.WindowsAzure.Storage.Table;
 using NHS111.Domain.CCG.Models;
 using Nito.AsyncEx;
 using Nito.AsyncEx.Synchronous;
+using CsvHelper.Configuration;
 
 namespace NHS111.DataImport.CCG
 {
@@ -80,7 +82,7 @@ namespace NHS111.DataImport.CCG
                     STPName = csvlookup.GetField<string>("STP17NM"),
                     CCGName = csvlookup.GetField<string>("CCG16NM"),
                     ProductName = csvlookup.GetField<string>("Product"),
-                    LiveDate = csvlookup.GetField<DateTime?>("LiveDate"),
+                    LiveDate = csvlookup.GetField<DateTime?>("LiveDate", new DateTimeLocalConverter()),
                     ServiceIdWhitelist = csvlookup.GetField<string>("ServiceIdWhitelist"),
                     ITKServiceIdWhitelist = csvlookup.GetField<string>("ITKServiceIdWhitelist")
                 }));
@@ -225,6 +227,16 @@ namespace NHS111.DataImport.CCG
         }
 
 
+    }
+
+    public class DateTimeLocalConverter : DateTimeConverter, ITypeConverter
+    {
+        public override object ConvertFromString(string text, IReaderRow row, MemberMapData memberMapData)
+        {
+            if (String.IsNullOrWhiteSpace(text))
+                return null;
+            return DateTime.ParseExact(text, "dd/MM/yyyy", null);
+        }
     }
 
     public class PostcodeRecord
