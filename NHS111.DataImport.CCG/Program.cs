@@ -33,21 +33,27 @@ namespace NHS111.DataImport.CCG
         private static int _counter;
         private static int _recordCount;
         private static int _terminatedPostcodesCount;
+        private static bool _onlyImportstpData = false;
         private static Dictionary<string, PostcodeRecord> _ccgLookup = new Dictionary<string, PostcodeRecord>();
         static void Main(string[] args)
         {
 
             Console.WriteLine("Beginning Data import");
-
             LoadSettings(args);
 
-            LoadCCGLookupdata(_ccgCsvFilePath).Wait();
             var clock = new Stopwatch();
             clock.Start();
-            RunImport().Wait();
+            LoadCCGLookupdata(_ccgCsvFilePath).Wait();
+            if (!_onlyImportstpData)
+            {
+                RunImport().Wait();
+                clock.Stop();
+                Console.WriteLine("finished importing " + _recordCount + " in " +
+                                  TimeSpan.FromMilliseconds(clock.ElapsedMilliseconds).ToString(@"hh\:mm\:ss"));
+            }
             clock.Stop();
-
-            Console.WriteLine("finished importing " + _recordCount + " in " + TimeSpan.FromMilliseconds(clock.ElapsedMilliseconds).ToString(@"hh\:mm\:ss"));
+            Console.WriteLine("finished importing stp data only in " +
+                              TimeSpan.FromMilliseconds(clock.ElapsedMilliseconds).ToString(@"hh\:mm\:ss"));
             Console.ReadLine();
 
         }
@@ -208,6 +214,10 @@ namespace NHS111.DataImport.CCG
                 if (args[i].StartsWith("-CSVFilePath="))
                 {
                     _postcodeCsvFilePath = args[i].Replace("-CSVFilePath=","");
+                }
+                if (args[i].StartsWith("-STPDataOnly"))
+                {
+                    _onlyImportstpData = true;
                 }
             }
 
