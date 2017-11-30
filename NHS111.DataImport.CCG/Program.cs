@@ -41,9 +41,9 @@ namespace NHS111.DataImport.CCG
             Console.WriteLine("Beginning Data import");
             LoadSettings(args);
 
-            LoadCCGLookupdata(_ccgCsvFilePath).Wait();
             var clock = new Stopwatch();
             clock.Start();
+            LoadCCGLookupdata(_ccgCsvFilePath).Wait();
             if (!_onlyImportstpData)
             {
                 RunImport().Wait();
