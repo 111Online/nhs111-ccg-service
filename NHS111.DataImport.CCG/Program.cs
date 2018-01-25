@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.Tracing;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Reflection.Metadata;
@@ -19,6 +20,7 @@ using Microsoft.WindowsAzure.Storage.Table;
 using NHS111.Domain.CCG.Models;
 using Nito.AsyncEx;
 using Nito.AsyncEx.Synchronous;
+using CsvHelper.Configuration;
 
 namespace NHS111.DataImport.CCG
 {
@@ -33,21 +35,27 @@ namespace NHS111.DataImport.CCG
         private static int _counter;
         private static int _recordCount;
         private static int _terminatedPostcodesCount;
+        private static bool _onlyImportstpData = false;
         private static Dictionary<string, PostcodeRecord> _ccgLookup = new Dictionary<string, PostcodeRecord>();
         static void Main(string[] args)
         {
 
             Console.WriteLine("Beginning Data import");
-            LoadDefaultgSettings();
             LoadSettings(args);
-            //LoadDebugSettings();
-            LoadCCGLookupdata(_ccgCsvFilePath).Wait();
+
             var clock = new Stopwatch();
             clock.Start();
-            RunImport().Wait();
+            LoadCCGLookupdata(_ccgCsvFilePath).Wait();
+            if (!_onlyImportstpData)
+            {
+                RunImport().Wait();
+                clock.Stop();
+                Console.WriteLine("finished importing " + _recordCount + " in " +
+                                  TimeSpan.FromMilliseconds(clock.ElapsedMilliseconds).ToString(@"hh\:mm\:ss"));
+            }
             clock.Stop();
-
-            Console.WriteLine("finished importing " + _recordCount + " in " + (clock.ElapsedMilliseconds /1000.00) + " seconds");
+            Console.WriteLine("finished importing stp data only in " +
+                              TimeSpan.FromMilliseconds(clock.ElapsedMilliseconds).ToString(@"hh\:mm\:ss"));
             Console.ReadLine();
 
         }
@@ -74,7 +82,7 @@ namespace NHS111.DataImport.CCG
                     STPName = csvlookup.GetField<string>("STP17NM"),
                     CCGName = csvlookup.GetField<string>("CCG16NM"),
                     ProductName = csvlookup.GetField<string>("Product"),
-                    LiveDate = csvlookup.GetField<DateTime?>("LiveDate"),
+                    LiveDate = csvlookup.GetField<DateTime?>("LiveDate", new DateTimeLocalConverter()),
                     ServiceIdWhitelist = csvlookup.GetField<string>("ServiceIdWhitelist"),
                     ITKServiceIdWhitelist = csvlookup.GetField<string>("ITKServiceIdWhitelist")
                 }));
@@ -134,7 +142,7 @@ namespace NHS111.DataImport.CCG
                         Postcode = postcode,
                         App = _ccgLookup.ContainsKey(ccgId) ? _ccgLookup[ccgId].AppName : "",
                         PartitionKey = "Postcodes",
-                        RowKey = postcode
+                        RowKey = NormalisePostcode(postcode)
                     }));
                     i++;
 
@@ -160,8 +168,8 @@ namespace NHS111.DataImport.CCG
 
         public static async Task ImportBatch(CloudTable table, TableBatchOperation batch, int number)
         {
-            var iportedCount = await table.ExecuteBatchAsync(batch);
-            var newcount = _counter + iportedCount.Count;
+            var importedCount = await table.ExecuteBatchAsync(batch);
+            var newcount = _counter + importedCount.Count;
             _counter = newcount;
             Console.WriteLine("Imported " + _counter + " records ("+_terminatedPostcodesCount +" terminated) of " + _recordCount + " (" + CalcuatePercentDone() + "%)");
         }
@@ -172,19 +180,11 @@ namespace NHS111.DataImport.CCG
                      / (decimal) _recordCount) * 100m).ToString("0.00");
         }
 
-       public static void LoadDefaultgSettings()
+        private static string NormalisePostcode(string postcode)
         {
-            _tableReference= "ccgTest";
-            _accountname = "111storestd";
-            _ccgtableReference = "stpTest";
+            return postcode.Replace(" ", "").ToUpper();
         }
-        public static void LoadDebugSettings()
-        {
-            _accountname = "111storestd";
-            _tableReference = "ccgTest";
-            _accountKey = @"TXXoIUj4ySXovV0G42CCPsLzLwcbztDvGqOZpq5Vj/+oxB7sNMgcU+uuPPZ65xzwHu66KxG5XDfKQLO7YeER+A==";
-            _postcodeCsvFilePath = @"C:\Users\jtiffen\Downloads\ccgstagingtest.csv";
-        }
+
         public static void LoadSettings(string[] args)
         {
             for (int i = 0; i < args.Length; i++)
@@ -217,12 +217,26 @@ namespace NHS111.DataImport.CCG
                 {
                     _postcodeCsvFilePath = args[i].Replace("-CSVFilePath=","");
                 }
+                if (args[i].StartsWith("-STPDataOnly"))
+                {
+                    _onlyImportstpData = true;
+                }
             }
 
 
         }
 
 
+    }
+
+    public class DateTimeLocalConverter : DateTimeConverter, ITypeConverter
+    {
+        public override object ConvertFromString(string text, IReaderRow row, MemberMapData memberMapData)
+        {
+            if (String.IsNullOrWhiteSpace(text))
+                return null;
+            return DateTime.ParseExact(text, "dd/MM/yyyy", null);
+        }
     }
 
     public class PostcodeRecord
