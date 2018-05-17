@@ -1,4 +1,7 @@
 ﻿
+using System.Collections.Generic;
+using System.Linq;
+
 namespace NHS111.Business.CCG.Services {
     using System;
     using System.Threading.Tasks;
@@ -9,6 +12,7 @@ namespace NHS111.Business.CCG.Services {
     public interface ICCGService {
         Task<CCGModel> Get(string postcode);
         Task<CCGDetailsModel> GetDetails(string postcode);
+        Task<List<CCGSummaryModel>> List();
     }
 
     public class CCGService
@@ -44,6 +48,21 @@ namespace NHS111.Business.CCG.Services {
             };
         }
 
+
+        private CCGSummaryModel Map(STPEntity result)
+        {
+            if (result == null)
+                return null;
+
+            return new CCGSummaryModel
+            {      
+                CCG = result.CCGName,  
+                CCGId = result.CCGId,
+                STP = result.STPName,
+                STPId = result.STPId
+            };
+        }
+
         private CCGDetailsModel Map(CCGEntity ccgEntity, STPEntity stpEntity)
         {
             if (ccgEntity == null)
@@ -74,6 +93,12 @@ namespace NHS111.Business.CCG.Services {
             if(String.IsNullOrEmpty(ccgResult.CCGId)) throw new ArgumentOutOfRangeException("Postcode does not have CCGId specified");
             stpResult = await _stpRepository.Get(ccgResult.CCGId);
             return Map(ccgResult, stpResult);
+        }
+
+        public async Task<List<CCGSummaryModel>> List()
+        {
+            var ccgResult = await _stpRepository.List();
+            return ccgResult.Select(r => Map(r)).ToList();
         }
 
         private readonly ICCGRepository _ccgRepository;
