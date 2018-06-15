@@ -13,6 +13,7 @@ namespace NHS111.Domain.CCG
     public interface ISTPRepository
     {
         Task<STPEntity> Get(string ccgId);
+        Task<List<STPEntity>> List();
     }
 
     public class STPRepository : ISTPRepository
@@ -35,6 +36,22 @@ namespace NHS111.Domain.CCG
             var retrievedResult = await _table.ExecuteQuerySegmentedAsync(query, null);
             return (STPEntity)retrievedResult.Results.First();
         }
-    
+
+        public async Task<List<STPEntity>> List()
+        {
+            await _table.CreateIfNotExistsAsync();
+
+            TableContinuationToken token = null;
+            var entities = new List<STPEntity>();
+            do
+            {
+                var queryResult = await _table.ExecuteQuerySegmentedAsync(new TableQuery<STPEntity>(), token);
+                entities.AddRange(queryResult.Results);
+                token = queryResult.ContinuationToken;
+            } while (token != null);
+
+            return entities;
+        }
+
     }
 }
