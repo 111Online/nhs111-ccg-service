@@ -44,7 +44,8 @@ namespace NHS111.Business.CCG.Services {
             return new CCGModel {
                 Postcode = result.Postcode,
                 CCG = result.CCG,
-                App = result.App
+                App = result.App,
+                DOSSearchDistance = result.DOSSearchDistance
             };
         }
 
@@ -73,6 +74,7 @@ namespace NHS111.Business.CCG.Services {
                 App = stpEntity.ProductName,
                 CCG = ccgEntity.CCG,
                 Postcode = ccgEntity.Postcode,
+                DOSSearchDistance = ccgEntity.DOSSearchDistance,
                 ServiceIdWhitelist = new ServiceListModel(stpEntity.ServiceIdWhitelist),
                 ITKServiceIdWhitelist = new ServiceListModel(stpEntity.ITKServiceIdWhitelist),
                 STPName = stpEntity.STPName
