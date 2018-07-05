@@ -8,7 +8,6 @@ namespace NHS111.Domain.CCG.Models {
         public string CCG { get; set; }
         public string CCGId { get; set; }
         public string App { get; set; }
-        public string DOSSearchDistance { get; set; }
 
     }
 }
