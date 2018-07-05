@@ -54,7 +54,7 @@ namespace NHS111.DataImport.CCG
             var clock = new Stopwatch();
             clock.Start();
             LoadCCGLookupdata(_ccgCsvFilePath).Wait();
-            LoadDOSSearchDistanceLookupdata("").Wait();
+            LoadDOSSearchDistanceLookupdata(_dosSearchDistanceFilePath).Wait();
 
             if (!_onlyImportstpData)
             {
@@ -120,7 +120,7 @@ namespace NHS111.DataImport.CCG
 
         public static async Task LoadDOSSearchDistanceLookupdata(string xlsFilePath)
         {
-            var package = new ExcelPackage(new FileInfo(_dosSearchDistanceFilePath));
+            var package = new ExcelPackage(new FileInfo(xlsFilePath));
             Console.WriteLine("Loading DOS search distance Data");
             var fullPostcodeSheet = package.Workbook.Worksheets[2];
             for (int i = 1; i <= fullPostcodeSheet.Dimension.End.Row; i++)
