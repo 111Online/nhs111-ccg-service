@@ -205,8 +205,8 @@ namespace NHS111.DataImport.CCG
             }
             //run remaining records
             tasks.Add(ImportBatch(table, batch, i));
-            Console.WriteLine("DOS Search distance not mapped count: " + noDosSearchDistanceCount);
             await Task.WhenAll(tasks);
+            Console.WriteLine("DOS Search distance not mapped count: " + noDosSearchDistanceCount);
         }
 
         public static async Task ImportBatch(CloudTable table, TableBatchOperation batch, int number)
