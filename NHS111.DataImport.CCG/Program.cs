@@ -36,7 +36,7 @@ namespace NHS111.DataImport.CCG
         private static string _accountKey;
         private static string _postcodeCsvFilePath;
         private static string _ccgCsvFilePath;
-        private static string _dosSaerchDistanceFilePath;
+        private static string _dosSearchDistanceFilePath;
         private static int _counter;
         private static int _recordCount;
         private static readonly Regex _regexRemoveWhitespace = new Regex(@"\s+");
@@ -120,7 +120,7 @@ namespace NHS111.DataImport.CCG
 
         public static async Task LoadDOSSearchDistanceLookupdata(string xlsFilePath)
         {
-            var package = new ExcelPackage(new FileInfo(_dosSaerchDistanceFilePath));
+            var package = new ExcelPackage(new FileInfo(_dosSearchDistanceFilePath));
             Console.WriteLine("Loading DOS search distance Data");
             var fullPostcodeSheet = package.Workbook.Worksheets[2];
             for (int i = 1; i <= fullPostcodeSheet.Dimension.End.Row; i++)
@@ -263,7 +263,7 @@ namespace NHS111.DataImport.CCG
 
                 if (args[i].StartsWith("-DosSaerchDistanceFilePath"))
                 {
-                    _dosSaerchDistanceFilePath = args[i].Replace("-DosSaerchDistanceFilePath=", "");
+                    _dosSearchDistanceFilePath = args[i].Replace("-DosSaerchDistanceFilePath=", "");
                 }
 
                 if (args[i].StartsWith("-STPDataOnly"))
