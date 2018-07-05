@@ -191,7 +191,7 @@ namespace NHS111.DataImport.CCG
                     if ((i % batchsizeMax) == 0)
                     {
 
-                        var task = ImportBatch(table, batch, i, noDosSearchDistanceCount);
+                        var task = ImportBatch(table, batch, i);
                         tasks.Add(task);
                         batch = new TableBatchOperation();
                     }
@@ -204,16 +204,17 @@ namespace NHS111.DataImport.CCG
                 else _terminatedPostcodesCount++;
             }
             //run remaining records
-            tasks.Add(ImportBatch(table, batch, i, noDosSearchDistanceCount));
+            tasks.Add(ImportBatch(table, batch, i));
+            Console.WriteLine("DOS Search distance not mapped count: " + noDosSearchDistanceCount);
             await Task.WhenAll(tasks);
         }
 
-        public static async Task ImportBatch(CloudTable table, TableBatchOperation batch, int number, int noDosSearchDistanceCount)
+        public static async Task ImportBatch(CloudTable table, TableBatchOperation batch, int number)
         {
             var importedCount = await table.ExecuteBatchAsync(batch);
             var newcount = _counter + importedCount.Count;
             _counter = newcount;
-            Console.WriteLine("Imported " + _counter + " records ("+_terminatedPostcodesCount +" terminated) of " + _recordCount +  " (" + CalcuatePercentDone() + "%)" + " Search distance no mapped count " + noDosSearchDistanceCount);
+            Console.WriteLine("Imported " + _counter + " records ("+_terminatedPostcodesCount +" terminated) of " + _recordCount +  " (" + CalcuatePercentDone() + "%)");
         }
 
         public static string CalcuatePercentDone()
