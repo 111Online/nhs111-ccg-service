@@ -34,10 +34,13 @@ namespace NHS111.Business.CCG.Api.Functional.Tests
 
         [TestCase("AL1 1DU", "25")]
         [TestCase("HA1 3SW", "15")]
+        [TestCase("NN11 0PZ", "40")]
         //full postcode with partial defined for same area
         [TestCase("BR6 0AB", "17")]
+        [TestCase("DA14 6PS", "17")]
         //partial postcode defined, not specific postcode
         [TestCase("BR8 7BU", "21")]
+        [TestCase("RH16 1AA", "24")]
         //neither full or partial postcode defined
         [TestCase("SO30 2UN", "")]
         public async Task CcgApiGetTests_returns_correct_searchdistance_postcode(string postcode, string searchDistance)
