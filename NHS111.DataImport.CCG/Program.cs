@@ -76,7 +76,7 @@ namespace NHS111.DataImport.CCG
                 batch.Add(TableOperation.InsertOrReplace(new STPEntity()
                 {
                     PartitionKey = "CCGs",
-                    RowKey = csvlookup.GetField<string>("FID"),
+                    RowKey = csvlookup.GetField<string>("CCG16CD"),
                     CCGId = csvlookup.GetField<string>("CCG16CD"),
                     STPId = csvlookup.GetField<string>("STP17CD"),
                     STPName = csvlookup.GetField<string>("STP17NM"),
