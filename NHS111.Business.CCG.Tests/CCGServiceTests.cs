@@ -30,19 +30,20 @@ namespace NHS111.Business.CCG.Tests {
 
         [Test(Description="The CCG service should return a valid CCG model when one is returned from the repo.")]
         public async Task Get_WithExistingPostcode_ReturnsCCG() {
-            var repoResult = SetupMockCCGRepoResult();
+            var ccgRepoResult = SetupMockCCGRepoResult();
+            var stpRepoResult = SetupMockSTPRepoResult();
             var actualResult = await _sut.Get(_validPostcode);
-            Assert.AreEqual(repoResult.Postcode, actualResult.Postcode, TestContext.CurrentContext.Test.Expectation() + " Postcodes didn't match");
-            Assert.AreEqual(repoResult.App, actualResult.App, TestContext.CurrentContext.Test.Expectation() + " App didn't match");
-            Assert.AreEqual(repoResult.CCG, actualResult.CCG, TestContext.CurrentContext.Test.Expectation() + " CCG didn't match");
+            Assert.AreEqual(ccgRepoResult.Postcode, actualResult.Postcode, TestContext.CurrentContext.Test.Expectation() + " Postcodes didn't match");
+            Assert.AreEqual(ccgRepoResult.App, actualResult.App, TestContext.CurrentContext.Test.Expectation() + " App didn't match");
+            Assert.AreEqual(ccgRepoResult.CCG, actualResult.CCG, TestContext.CurrentContext.Test.Expectation() + " CCG didn't match");
+            Assert.AreEqual(stpRepoResult.STPName, actualResult.STP, TestContext.CurrentContext.Test.Expectation() + " CCG didn't match");
         }
 
         [Test(Description = "The CCG service should return a valid CCG model with details when one is returned from the repo.")]
         public async Task Get_Details_WithExistingPostcode_ReturnsCCGExtendedDetails()
         {
             var ccgRepoResult = SetupMockCCGRepoResult();
-            var stpRepoResult = new STPEntity() { CCGId = "1234", ProductName = "some app", STPName = "SomeStp", CCGName = "some ccg", ServiceIdWhitelist = "55555|66666|77777", ITKServiceIdWhitelist = "9999|0000"};
-            _mockstpRepo.Setup(r => r.Get(It.IsAny<string>())).Returns(Task.FromResult(stpRepoResult));
+            var stpRepoResult = SetupMockSTPRepoResult();
 
             var actualResult = await _sut.GetDetails(_validPostcode);
             Assert.AreEqual(ccgRepoResult.Postcode, actualResult.Postcode, TestContext.CurrentContext.Test.Expectation() + " Postcodes didn't match");
@@ -56,9 +57,16 @@ namespace NHS111.Business.CCG.Tests {
 
         private CCGEntity SetupMockCCGRepoResult()
         {
-            var repoResult = new CCGEntity {Postcode = "XXX", App = "some app", CCG = "some ccg", CCGId = "1234"};
+            var repoResult = new CCGEntity {Postcode = "XXX", App = "some app", STP = "some stp", STPId = "5678", CCG = "some ccg", CCGId = "1234"};
             _mockccgRepo.Setup(r => r.Get(It.IsAny<string>())).Returns(Task.FromResult(repoResult));
             return repoResult;
+        }
+
+        private STPEntity SetupMockSTPRepoResult()
+        {
+            var stpRepoResult = new STPEntity() { CCGId = "1234", ProductName = "some app", STPName = "SomeStp", CCGName = "some ccg", ServiceIdWhitelist = "55555|66666|77777", ITKServiceIdWhitelist = "9999|0000" };
+            _mockstpRepo.Setup(r => r.Get(It.IsAny<string>())).Returns(Task.FromResult(stpRepoResult));
+            return stpRepoResult;
         }
 
         [Test(Description = "The CCG service should return null when null is returned from the repo.")]
