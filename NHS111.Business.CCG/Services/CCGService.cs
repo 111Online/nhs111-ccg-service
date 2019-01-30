@@ -28,29 +28,35 @@ namespace NHS111.Business.CCG.Services {
                 throw new ArgumentException("Postcode must be valid.");
 
             postcode = NormalisePostcode(postcode);
-            var result = await _ccgRepository.Get(postcode);
+            var ccgResult = await _ccgRepository.Get(postcode);
 
-            return Map(result);
+            if (ccgResult == null)
+                return null;
+
+            if (String.IsNullOrEmpty(ccgResult.CCGId)) throw new ArgumentOutOfRangeException("Postcode does not have CCGId specified");
+            var stpResult = await _stpRepository.Get(ccgResult.CCGId);
+            return Map(ccgResult, stpResult);
         }
 
         private string NormalisePostcode(string postcode) {
             return postcode.Replace(" ", "").ToUpper();
         }
 
-        private CCGModel Map(CCGEntity result) {
-            if (result == null)
+        private CCGModel Map(CCGEntity ccg, STPEntity stp) {
+            if (ccg == null || stp == null)
                 return null;
 
             return new CCGModel {
-                Postcode = result.Postcode,
-                CCG = result.CCG,
-                App = result.App,
-                DOSSearchDistance = result.DOSSearchDistance
+                Postcode = ccg.Postcode,
+                STP = stp.STPName,
+                CCG = ccg.CCG,
+                App = ccg.App,
+                DOSSearchDistance = ccg.DOSSearchDistance
             };
         }
 
 
-        private CCGSummaryModel Map(STPEntity result)
+        private CCGSummaryModel SummaryMap(STPEntity result)
         {
             if (result == null)
                 return null;
@@ -64,7 +70,7 @@ namespace NHS111.Business.CCG.Services {
             };
         }
 
-        private CCGDetailsModel Map(CCGEntity ccgEntity, STPEntity stpEntity)
+        private CCGDetailsModel DetailsMap(CCGEntity ccgEntity, STPEntity stpEntity)
         {
             if (ccgEntity == null)
                 return null;
@@ -94,13 +100,13 @@ namespace NHS111.Business.CCG.Services {
 
             if(String.IsNullOrEmpty(ccgResult.CCGId)) throw new ArgumentOutOfRangeException("Postcode does not have CCGId specified");
             stpResult = await _stpRepository.Get(ccgResult.CCGId);
-            return Map(ccgResult, stpResult);
+            return DetailsMap(ccgResult, stpResult);
         }
 
         public async Task<List<CCGSummaryModel>> List()
         {
             var ccgResult = await _stpRepository.List();
-            return ccgResult.Select(r => Map(r)).ToList();
+            return ccgResult.Select(SummaryMap).ToList();
         }
 
         private readonly ICCGRepository _ccgRepository;
