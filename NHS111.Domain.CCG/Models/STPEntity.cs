@@ -15,8 +15,8 @@ namespace NHS111.Domain.CCG.Models
         public string CCGId { get; set; }
         public string ProductName { get; set; }
         public DateTime? LiveDate { get; set; }
-        public string ServiceIdWhitelist { get; set; }
-        public string ITKServiceIdWhitelist { get; set; }
+        public string PharmacyServiceIdWhitelist { get; set; }
+        public string ReferralServiceIdWhitelist { get; set; }
     }
 
 }
