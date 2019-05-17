@@ -1,11 +1,10 @@
-﻿
-namespace NHS111.Business.CCG.Api.Controllers {
+﻿namespace NHS111.Business.CCG.Api.Controllers {
     using System.Threading.Tasks;
     using Microsoft.AspNetCore.Mvc;
     using Services;
 
     [Route("api/[controller]")]
-    public class CCGController 
+    public class CCGController
         : Controller {
 
         public CCGController(ICCGService service) {
@@ -26,8 +25,7 @@ namespace NHS111.Business.CCG.Api.Controllers {
         }
 
         [HttpGet("List")]
-        public async Task<IActionResult> List()
-        {
+        public async Task<IActionResult> List() {
 
             var result = await _service.List();
 
@@ -38,8 +36,7 @@ namespace NHS111.Business.CCG.Api.Controllers {
         }
 
         [HttpGet("Details/{postcode}")]
-        public async Task<IActionResult> GetDetails(string postcode)
-        {
+        public async Task<IActionResult> GetDetails(string postcode) {
             if (IsBadRequest(postcode))
                 return BadRequest();
 
@@ -52,7 +49,8 @@ namespace NHS111.Business.CCG.Api.Controllers {
         }
 
         private static bool IsBadRequest(string postcode) {
-            return string.IsNullOrEmpty(postcode);
+            return !PostCodeFormatValidator.IsAValidPostcode(postcode) ||
+                   string.IsNullOrEmpty(postcode);
         }
 
         private readonly ICCGService _service;
