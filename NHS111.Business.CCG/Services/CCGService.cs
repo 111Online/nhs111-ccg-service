@@ -72,7 +72,7 @@ namespace NHS111.Business.CCG.Services {
 
         private CCGDetailsModel DetailsMap(CCGEntity ccgEntity, STPEntity stpEntity)
         {
-            if (ccgEntity == null)
+            if (ccgEntity == null || stpEntity == null)
                 return null;
 
             return new CCGDetailsModel()
