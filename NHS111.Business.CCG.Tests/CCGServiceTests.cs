@@ -49,10 +49,10 @@ namespace NHS111.Business.CCG.Tests {
             Assert.AreEqual(ccgRepoResult.Postcode, actualResult.Postcode, TestContext.CurrentContext.Test.Expectation() + " Postcodes didn't match");
             Assert.AreEqual(ccgRepoResult.App, actualResult.App, TestContext.CurrentContext.Test.Expectation() + " App didn't match");
             Assert.AreEqual(ccgRepoResult.CCG, actualResult.CCG, TestContext.CurrentContext.Test.Expectation() + " CCG didn't match");
-            Assert.AreEqual(3, actualResult.ServiceIdWhitelist.Count);
-            Assert.IsTrue(actualResult.ServiceIdWhitelist.Contains("66666"));
-            Assert.AreEqual(2, actualResult.ITKServiceIdWhitelist.Count);
-            Assert.IsTrue(actualResult.ITKServiceIdWhitelist.Contains("9999"));
+            Assert.AreEqual(3, actualResult.ReferralServiceIdWhitelist.Count);
+            Assert.IsTrue(actualResult.ReferralServiceIdWhitelist.Contains("66666"));
+            Assert.AreEqual(2, actualResult.PharmacyReferralServiceIdWhitelist.Count);
+            Assert.IsTrue(actualResult.PharmacyReferralServiceIdWhitelist.Contains("9999"));
         }
 
         private CCGEntity SetupMockCCGRepoResult()
@@ -64,7 +64,7 @@ namespace NHS111.Business.CCG.Tests {
 
         private STPEntity SetupMockSTPRepoResult()
         {
-            var stpRepoResult = new STPEntity() { CCGId = "1234", ProductName = "some app", STPName = "SomeStp", CCGName = "some ccg", ServiceIdWhitelist = "55555|66666|77777", ITKServiceIdWhitelist = "9999|0000" };
+            var stpRepoResult = new STPEntity() { CCGId = "1234", ProductName = "some app", STPName = "SomeStp", CCGName = "some ccg", ReferralServiceIdWhitelist = "55555|66666|77777", PharmacyServiceIdWhitelist = "9999|0000" };
             _mockstpRepo.Setup(r => r.Get(It.IsAny<string>())).Returns(Task.FromResult(stpRepoResult));
             return stpRepoResult;
         }

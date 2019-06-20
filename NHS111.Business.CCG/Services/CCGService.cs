@@ -72,7 +72,7 @@ namespace NHS111.Business.CCG.Services {
 
         private CCGDetailsModel DetailsMap(CCGEntity ccgEntity, STPEntity stpEntity)
         {
-            if (ccgEntity == null)
+            if (ccgEntity == null || stpEntity == null)
                 return null;
 
             return new CCGDetailsModel()
@@ -80,8 +80,8 @@ namespace NHS111.Business.CCG.Services {
                 App = stpEntity.ProductName,
                 CCG = ccgEntity.CCG,
                 Postcode = ccgEntity.Postcode,
-                ServiceIdWhitelist = new ServiceListModel(stpEntity.ServiceIdWhitelist),
-                ITKServiceIdWhitelist = new ServiceListModel(stpEntity.ITKServiceIdWhitelist),
+                ReferralServiceIdWhitelist = new ServiceListModel(stpEntity.ReferralServiceIdWhitelist),
+                PharmacyReferralServiceIdWhitelist = new ServiceListModel(stpEntity.PharmacyServiceIdWhitelist),
                 STPName = stpEntity.STPName,
                 DOSSearchDistance = ccgEntity.DOSSearchDistance
             };

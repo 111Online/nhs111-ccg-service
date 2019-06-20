@@ -34,7 +34,7 @@ namespace NHS111.Domain.CCG
             TableQuery<STPEntity> query = new TableQuery<STPEntity>().Where("CCGId eq '" + ccgId +"'");
 
             var retrievedResult = await _table.ExecuteQuerySegmentedAsync(query, null);
-            return (STPEntity)retrievedResult.Results.First();
+            return (STPEntity)retrievedResult.Results.FirstOrDefault();
         }
 
         public async Task<List<STPEntity>> List()

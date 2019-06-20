@@ -39,8 +39,8 @@ namespace NHS111.Business.CCG.Functional.Tests.Tools
         private static void AssertValidGetDetailsResponseSchema(string result)
         {
             Assert.IsTrue(result.Contains("\"stpName"));
-            Assert.IsTrue(result.Contains("\"serviceIdWhitelist"));
-            Assert.IsTrue(result.Contains("\"itkServiceIdWhitelist"));
+            Assert.IsTrue(result.Contains("\"referralServiceIdWhitelist"));
+            Assert.IsTrue(result.Contains("\"pharmacyReferralServiceIdWhitelist"));
             Assert.IsTrue(result.Contains("\"postcode"));
             Assert.IsTrue(result.Contains("\"ccg"));
             Assert.IsTrue(result.Contains("\"app"));
