@@ -30,11 +30,11 @@
         [Test(Description = "When calling Get() with a CCG returned from datalayer it should respond with a 200 OK result and correct CCG.")]
         public async Task Get_WhenCCGReturnedFromDataLayer_Returns200OK() {
             //Arrange
-            var expectedCCG = new CCGModel { Postcode = "some postcode"};
+            var expectedCCG = new CCGModel { Postcode = "So302un"};
             _mockService.Setup(s => s.Get(It.IsAny<string>())).Returns(Task.FromResult(expectedCCG));
             var sut = new CCGController(_mockService.Object);
             //Act
-            var response = await sut.Get("somepostcode");
+            var response = await sut.Get("So302un");
             //Assert
             Assert.IsInstanceOf<OkObjectResult>(response, TestContext.CurrentContext.Test.Expectation());
             var model = (response as OkObjectResult)?.Value;
@@ -48,7 +48,7 @@
             _mockService.Setup(s => s.Get(It.IsAny<string>())).Returns(Task.FromResult<CCGModel>(null));
             var sut = new CCGController(_mockService.Object);
             //Act
-            var response = await sut.Get("somepostcode");
+            var response = await sut.Get("So302un");
             //Assert
             Assert.IsInstanceOf<NotFoundResult>(response, TestContext.CurrentContext.Test.Expectation());
         }
