@@ -2,7 +2,7 @@
   "profiles": {
     "NHS111.DataImport.CCG": {
       "commandName": "Project",
-      "commandLineArgs": ""
+      "commandLineArgs": "-ccgCsvFilePath=D:\\GitLab\\nhs111-ccg-service\\NHS111.DataImport.CCG\\CCGData.csv -AccountName=111ukwstorage -AccountKey=SaQ3atuYWA5J2Wl0mUTeitvZBf3X7c18dExgd0u0RrbDiH+ZuBV3Cz/uh1IKGobLY6XGYQnxJGdM3Vdby3VAKw== -whitelistFilePath=D:\\GitLab\\nhs111-ccg-service\\NHS111.DataImport.CCG\\Pharmacy-NWL-Dev.csv -ccgTableRef=cistp -TableRef=ciccg"
     }
   }
 }
