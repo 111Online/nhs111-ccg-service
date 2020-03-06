@@ -81,8 +81,8 @@
             {
                 var filePath = GetSetting("whitelistFilePath");
 
-                var blobName = GetSetting("whitelistBlob");
-
+                var blobName = filePath.Substring(filePath.LastIndexOf(@"\", StringComparison.Ordinal) +1).Replace(".csv", "");
+                
                 using (var fs = new FileStream(filePath, FileMode.Open))
                 {
                     var blob = GetBlob(blobName);
@@ -401,9 +401,7 @@
                 throw new Exception("", e);
             }
         }
-
-        private const string WhitespacePattern = @"\s+";
-
+        
         private CloudTable GetTable(string name)
         {
             try
@@ -456,7 +454,9 @@
 
                     var accountKey = GetSetting("AccountKey");
 
-                    _storageAccount = new CloudStorageAccount(new StorageCredentials(accountName, accountKey), true);
+                    var credentials = new StorageCredentials(accountName, accountKey);
+
+                    _storageAccount = new CloudStorageAccount(credentials, true);
                 }
 
                 return _storageAccount;
@@ -468,6 +468,8 @@
                 throw new Exception("", e);
             }
         }
+
+        private const string WhitespacePattern = @"\s+";
 
         private const string BlobContainerName = "epWhitelist";
         
