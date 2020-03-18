@@ -26,7 +26,7 @@
             _arguments = new Dictionary<string, string>();
 
             _ccgLookup = new Dictionary<string, PostcodeRecord>();
-
+            
             _dosSearchDistanceLookup = new Dictionary<string, int>();
 
             _dosSearchDistancePartialLookup = new Dictionary<string, int>();
@@ -44,10 +44,10 @@
 
                 clock.Start();
 
-                UploadNationalWhitelist();
+                Task.Run(UploadNationalWhitelist).GetAwaiter().GetResult();
 
-                LoadCCGLookupData();
-
+                Task.Run(LoadCCGLookupData).GetAwaiter().GetResult();
+                
                 LoadDOSSearchDistanceLookupData();
 
                 clock.Stop();
@@ -75,7 +75,7 @@
             }
         }
         
-        private void UploadNationalWhitelist()
+        private async Task UploadNationalWhitelist()
         {
             try
             {
@@ -87,7 +87,7 @@
                 {
                     var blob = GetBlob(blobName);
 
-                    blob.Result.UploadFromStreamAsync(fs);
+                    await blob.Result.UploadFromStreamAsync(fs);
                 }
             }
             catch (Exception e)
@@ -98,7 +98,7 @@
             }
         }
 
-        public async void LoadCCGLookupData()
+        public async Task LoadCCGLookupData()
         {
             try
             {
@@ -151,6 +151,7 @@
                             if (batch.Count % 100 == 0)
                             {
                                 await stpTable.ExecuteBatchAsync(batch);
+
                                 batch = new TableBatchOperation();
                             }
                         }
@@ -337,11 +338,13 @@
             {
                 foreach (var t in args)
                 {
-                    var split = t.Split("=");
+                    var key = t
+                        .Substring(0, t.IndexOf('='))
+                        .Replace("-", string.Empty);
 
-                    var key = split[0].Replace("-", string.Empty);
-
-                    _arguments.Add(key, split[1]);
+                    var value = t.Substring(t.IndexOf('=') + 1);
+                    
+                    _arguments.Add(key, value);
                 }
             }
             catch (Exception e)
@@ -468,10 +471,10 @@
                 throw new Exception("", e);
             }
         }
-
+        
         private const string WhitespacePattern = @"\s+";
 
-        private const string BlobContainerName = "epWhitelist";
+        private const string BlobContainerName = "epwhitelist";
         
         private int _recordCount;
 
@@ -482,7 +485,7 @@
         private Dictionary<string, string> _arguments;
 
         private static Dictionary<string, PostcodeRecord> _ccgLookup;
-
+        
         private CloudStorageAccount _storageAccount;
 
         private Dictionary<string, int> _dosSearchDistanceLookup;
