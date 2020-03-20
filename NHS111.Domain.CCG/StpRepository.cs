@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.WindowsAzure.Storage;
 using Microsoft.WindowsAzure.Storage.Table;
@@ -11,7 +10,7 @@ namespace NHS111.Domain.CCG
     {
         private readonly CloudTable _table;
 
-        public STPRepository(AzureAccountSettings settings)
+        public STPRepository(IAzureAccountSettings settings)
         {
             var storageAccount = CloudStorageAccount.Parse(settings.ConnectionString);
             var tableClient = storageAccount.CreateCloudTableClient();
@@ -22,11 +21,11 @@ namespace NHS111.Domain.CCG
         {
             await _table.CreateIfNotExistsAsync();
 
-            var query = new TableQuery<STPEntity>().Where("CCGId eq '" + ccgId +"'");
+            var operation = TableOperation.Retrieve<STPEntity>("CCGs", ccgId);
 
-            var retrievedResult = await _table.ExecuteQuerySegmentedAsync(query, null);
+            var result = await  _table.ExecuteAsync(operation);
 
-            return retrievedResult.Results.FirstOrDefault();
+            return result.Result as STPEntity;
         }
 
         public async Task<List<STPEntity>> List()

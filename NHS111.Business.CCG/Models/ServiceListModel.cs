@@ -1,23 +1,28 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+﻿using System.Collections.Generic;
 
 namespace NHS111.Business.CCG.Models
 {
-
     public class ServiceListModel : List<string>
     {
-        public ServiceListModel()
+        public ServiceListModel(string serviceIdList)
         {
+            if (!string.IsNullOrWhiteSpace(serviceIdList))
+            {
+                AppendServices(serviceIdList);
+            }
         }
-        public ServiceListModel(string serviceidList) : base()
+
+        public void AppendServices(string services)
         {
-            if(!String.IsNullOrWhiteSpace(serviceidList)) this.AddRange(serviceidList.Split('|').ToList());
+            if (!string.IsNullOrWhiteSpace(services))
+            {
+                AddRange(services.Split('|'));
+            }
         }
+
         public override string ToString()
         {
-            return String.Join('|', this);
+            return string.Join('|', this);
         }
     }
 }
