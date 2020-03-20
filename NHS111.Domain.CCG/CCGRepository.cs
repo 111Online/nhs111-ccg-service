@@ -14,7 +14,7 @@
     {
         private readonly CloudTable _table;
 
-        public CCGRepository(AzureAccountSettings settings)
+        public CCGRepository(IAzureAccountSettings settings)
         {
             var storageAccount = CloudStorageAccount.Parse(settings.ConnectionString);
 

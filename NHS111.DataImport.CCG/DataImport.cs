@@ -80,14 +80,16 @@
             try
             {
                 var filePath = GetSetting("whitelistFilePath");
-
+                
+                var content = File.ReadAllText(filePath);
+                
                 var blobName = filePath.Substring(filePath.LastIndexOf(@"\", StringComparison.Ordinal) +1).Replace(".csv", "");
                 
                 using (var fs = new FileStream(filePath, FileMode.Open))
                 {
                     var blob = GetBlob(blobName);
 
-                    await blob.Result.UploadFromStreamAsync(fs);
+                    await blob.Result.UploadTextAsync(content);
                 }
             }
             catch (Exception e)

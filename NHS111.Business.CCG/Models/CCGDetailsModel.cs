@@ -7,13 +7,5 @@
         public ServiceListModel ReferralServiceIdWhitelist { get; set; }
 
         public ServiceListModel PharmacyReferralServiceIdWhitelist { get; set; }
-
-        public bool PharmacyServicesAvailable
-        {
-            get
-            {
-                return PharmacyReferralServiceIdWhitelist?.Count > 0;
-            }
-        }
     }
 }
