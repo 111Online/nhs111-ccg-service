@@ -1,8 +1,7 @@
 {
   "profiles": {
     "NHS111.DataImport.CCG": {
-      "commandName": "Project",
-      "commandLineArgs": "-ccgCsvFilePath=D:\\GitLab\\nhs111-ccg-service\\NHS111.DataImport.CCG\\CCGData.csv -AccountName=111ukwstorage -AccountKey=pfVnDcO1Z/kQg4bK0wKBR897ufZ8ydS4w5FNw5jCKhATZC54nNwYOVnyZgiZ2h1mrjKwhMilwqLV/URmBjL7Eg== -whitelistFilePath=D:\\GitLab\\nhs111-ccg-service\\NHS111.DataImport.CCG\\Pharmacy-NWL-Integration.csv -ccgTableRef=cistp -TableRef=ciccg -CSVFilePath=C:\\Users\\andre\\Downloads\\ONS_Postcode_Directory_Latest_England.csv -DosSaerchDistanceFilePath=C:\\Users\\andre\\Downloads\\Postcode_Master_v0.1.xlsx"
+      "commandName": "Project"
     }
   }
 }

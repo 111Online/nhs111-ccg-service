@@ -36,40 +36,22 @@
         {
             try
             {
-                Console.WriteLine("Beginning Data import");
-
                 LoadSettings(args);
-
-                var clock = new Stopwatch();
-
-                clock.Start();
-
+                
                 Task.Run(UploadNationalWhitelist).GetAwaiter().GetResult();
 
                 Task.Run(LoadCCGLookupData).GetAwaiter().GetResult();
                 
                 LoadDOSSearchDistanceLookupData();
-
-                clock.Stop();
-
-                var elapsed = TimeSpan.FromMilliseconds(clock.ElapsedMilliseconds).ToString(@"hh\:mm\:ss");
-
-                if (!string.IsNullOrWhiteSpace(GetSetting("STPDataOnly")))
-                {
-                    Console.WriteLine("finished importing stp data only in {0}", elapsed);
-                }
-                else
+                
+                if (string.IsNullOrWhiteSpace(GetSetting("STPDataOnly")))
                 {
                     RunImport();
-
-                    Console.WriteLine("finished importing {0} in {1}", _recordCount, elapsed);
                 }
-
-                Console.ReadLine();
             }
             catch (Exception e)
             {
-                Console.WriteLine("Import failed: {0}", e.Message);
+                // TODO: Add application logging
 
                 throw new Exception("", e);
             }
@@ -83,18 +65,18 @@
                 
                 var content = File.ReadAllText(filePath);
                 
-                var blobName = filePath.Substring(filePath.LastIndexOf(@"\", StringComparison.Ordinal) +1).Replace(".csv", "");
+                var blobName = filePath.Substring(filePath.LastIndexOf(@"\", StringComparison.Ordinal) +1);
                 
                 using (var fs = new FileStream(filePath, FileMode.Open))
                 {
-                    var blob = GetBlob(blobName);
+                    var blob = GetBlob(blobName).Result;
 
-                    await blob.Result.UploadTextAsync(content);
+                    await blob.UploadFromStreamAsync(fs);
                 }
             }
             catch (Exception e)
             {
-                Console.WriteLine("Unable to load the national whitelist file: {0}", e.Message);
+                // TODO: Add application logging
 
                 throw new Exception("", e);
             }
@@ -167,7 +149,7 @@
             }
             catch (Exception e)
             {
-                Console.WriteLine("Unable to Load the CCG Lookup Data: {0}", e.Message);
+                // TODO: Add application logging
 
                 throw new Exception("", e);
             }
@@ -180,9 +162,7 @@
                 var filePath = GetSetting("DosSaerchDistanceFilePath");
 
                 var package = new ExcelPackage(new FileInfo(filePath));
-
-                Console.WriteLine("Loading DOS search distance Data");
-
+                
                 var fullPostcodeSheet = package.Workbook.Worksheets[2];
 
                 for (var i = 1; i <= fullPostcodeSheet.Dimension.End.Row; i++)
@@ -196,12 +176,10 @@
                 {
                     _dosSearchDistancePartialLookup.Add(RemoveWhitespace(partialPostcodeSheet.Cells[i, 1].Value.ToString()), Convert.ToInt32(partialPostcodeSheet.Cells[i, 2].Value));
                 }
-
-                Console.WriteLine("Finished loading DOS search distance Data");
             }
             catch (Exception e)
             {
-                Console.WriteLine("Unable to load the DOS Search Distance Lookup Data: {0}", e.Message);
+                // TODO: Add application logging
 
                 throw new Exception("", e);
             }
@@ -298,15 +276,12 @@
                     }
                 }
                 
-                //run remaining records
                 tasks.Add(ImportBatch(table, batch));
                 await Task.WhenAll(tasks);
-
-                Console.WriteLine("DOS Search distance not mapped count: " + noDosSearchDistanceCount);
             }
             catch (Exception e)
             {
-                Console.WriteLine("Unable to complete the import: {0}", e.Message);
+                // TODO: Add application logging
 
                 throw new Exception("", e);
             }
@@ -321,14 +296,10 @@
                 var newCount = _counter + importedCount.Count;
 
                 _counter = newCount;
-
-                var percentDone = CalculatePercentDone();
-                
-                Console.WriteLine("Imported {0} records ({1} terminated) of {2} ({3}%)", _counter, _terminatedPostcodesCount, _recordCount, percentDone);
             }
             catch (Exception e)
             {
-                Console.WriteLine("Unable to import batch: {0}", e.Message);
+                // TODO: Add application logging
 
                 throw new Exception("", e);
             }
@@ -351,7 +322,7 @@
             }
             catch (Exception e)
             {
-                Console.WriteLine("Load settings error: {0}", e.Message);
+                // TODO: Add application logging
 
                 throw new Exception("", e);
             }
@@ -367,7 +338,7 @@
             }
             catch (Exception e)
             {
-                Console.WriteLine("Unable to retrieve setting {0}", key);
+                // TODO: Add application logging
 
                 throw new Exception("", e);
             }
@@ -387,7 +358,7 @@
             }
             catch (Exception e)
             {
-                Console.WriteLine("Unable to normalise postcode: {0}", e.Message);
+                // TODO: Add application logging
 
                 throw new Exception("", e);
             }
@@ -401,7 +372,7 @@
             }
             catch (Exception e)
             {
-                Console.WriteLine("Unable to calculate percent done: {0}", e.Message);
+                // TODO: Add application logging
 
                 throw new Exception("", e);
             }
@@ -419,7 +390,7 @@
             }
             catch (Exception e)
             {
-                Console.WriteLine("GetTable({0}) failed: {1}", name, e.Message);
+                // TODO: Add application logging
 
                 throw new Exception("", e);
             }
@@ -434,7 +405,7 @@
                 var client = storageAccount.CreateCloudBlobClient();
 
                 var container = client.GetContainerReference(BlobContainerName);
-
+                
                 await container.CreateIfNotExistsAsync();
 
                 var blob = container.GetBlockBlobReference(name);
@@ -443,7 +414,7 @@
             }
             catch (Exception e)
             {
-                Console.WriteLine("GetBlob({0}) failed: {1}", name, e.Message);
+                // TODO: Add application logging
 
                 throw new Exception("", e);
             }
@@ -468,7 +439,7 @@
             }
             catch (Exception e)
             {
-                Console.WriteLine("GetStorageAccount failed: {0}", e.Message);
+                // TODO: Add application logging
 
                 throw new Exception("", e);
             }

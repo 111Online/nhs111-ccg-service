@@ -6,6 +6,8 @@ using System.Threading.Tasks;
 
 namespace NHS111.Business.CCG.Services
 {
+    using System.IO;
+
     using Domain.CCG;
     using Domain.CCG.Models;
 
@@ -139,11 +141,26 @@ namespace NHS111.Business.CCG.Services
 
         private async Task<string> AppendNationalWhitelistToGPOutOfHours(string gpOutOfHours)
         {
-            var blob = GetBlob(_azureAccountSettings.NationalWhitelistBlobName);
+            var blob = GetBlob(_azureAccountSettings.NationalWhitelistBlobName + ".csv").Result;
 
-            var nationalWhitelist = await blob.Result.DownloadTextAsync();
+            var allServices = new List<string>();
 
-            var allServices = nationalWhitelist.Split('|').ToList();
+            using (var ms = new MemoryStream())
+            {
+                await blob.DownloadToStreamAsync(ms);
+
+                ms.Position = 0;
+
+                using (var sr = new StreamReader(ms))
+                {
+                    var nationalWhitelist = sr.ReadToEnd();
+
+                    if (!string.IsNullOrWhiteSpace(nationalWhitelist))
+                    {
+                        allServices.AddRange(nationalWhitelist.Split('|'));
+                    }
+                }
+            }
 
             allServices.AddRange(gpOutOfHours.Split('|'));
 
@@ -168,7 +185,7 @@ namespace NHS111.Business.CCG.Services
             }
             catch (Exception e)
             {
-                Console.WriteLine("GetBlob({0}) failed: {1}", name, e.Message);
+                // TODO: Add application logging
 
                 throw new Exception("", e);
             }
