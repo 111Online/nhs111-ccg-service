@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+﻿using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.WindowsAzure.Storage;
 using Microsoft.WindowsAzure.Storage.Table;
@@ -9,18 +6,11 @@ using NHS111.Domain.CCG.Models;
 
 namespace NHS111.Domain.CCG
 {
-
-    public interface ISTPRepository
-    {
-        Task<STPEntity> Get(string ccgId);
-        Task<List<STPEntity>> List();
-    }
-
     public class STPRepository : ISTPRepository
     {
         private readonly CloudTable _table;
 
-        public STPRepository(AzureAccountSettings settings)
+        public STPRepository(IAzureAccountSettings settings)
         {
             var storageAccount = CloudStorageAccount.Parse(settings.ConnectionString);
             var tableClient = storageAccount.CreateCloudTableClient();
@@ -31,10 +21,11 @@ namespace NHS111.Domain.CCG
         {
             await _table.CreateIfNotExistsAsync();
 
-            TableQuery<STPEntity> query = new TableQuery<STPEntity>().Where("CCGId eq '" + ccgId +"'");
+            var operation = TableOperation.Retrieve<STPEntity>("CCGs", ccgId);
 
-            var retrievedResult = await _table.ExecuteQuerySegmentedAsync(query, null);
-            return (STPEntity)retrievedResult.Results.FirstOrDefault();
+            var result = await  _table.ExecuteAsync(operation);
+
+            return result.Result as STPEntity;
         }
 
         public async Task<List<STPEntity>> List()
@@ -42,6 +33,7 @@ namespace NHS111.Domain.CCG
             await _table.CreateIfNotExistsAsync();
 
             TableContinuationToken token = null;
+
             var entities = new List<STPEntity>();
             do
             {
@@ -52,6 +44,5 @@ namespace NHS111.Domain.CCG
 
             return entities;
         }
-
     }
 }

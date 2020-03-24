@@ -1,6 +1,7 @@
-﻿namespace NHS111.Business.CCG.Services {
-    using System.Text.RegularExpressions;
+﻿using System.Text.RegularExpressions;
 
+namespace NHS111.Business.CCG.Services
+{
     public static class PostCodeFormatValidator
     {
         public static string PostcodeRegex = @"^([Gg][Ii][Rr] 0[Aa]{2})|((([A-Za-z][0-9]{1,2})|(([A-Za-z][A-Ha-hJ-Yj-y][0-9]{1,2})|(([A-Za-z][0-9][A-Za-z])|([A-Za-z][A-Ha-hJ-Yj-y][0-9]?[A-Za-z]))))[0-9][A-Za-z]{2})$";

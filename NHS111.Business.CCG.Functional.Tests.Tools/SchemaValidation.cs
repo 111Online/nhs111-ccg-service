@@ -1,7 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Text;
+﻿using System.ComponentModel;
+
 using NUnit.Framework;
 
 namespace NHS111.Business.CCG.Functional.Tests.Tools
@@ -13,6 +11,7 @@ namespace NHS111.Business.CCG.Functional.Tests.Tools
             Get,
             GetDetails
         }
+
         public static void AssertValidResponseSchema(string result, ResponseSchemaType schemaType)
         {
             switch (schemaType)

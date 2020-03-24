@@ -9,7 +9,7 @@ namespace NHS111.Business.CCG.Functional.Tests.Tools
             return new ConfigurationBuilder()
                 .SetBasePath(outputPath)
                 .AddJsonFile("appsettings.json")
-                    .AddJsonFile("C:\\Configurations\\nhs111-shared-resources\\appsettings.debug.json", optional: true)
+                .AddJsonFile("C:\\Configurations\\nhs111-shared-resources\\appsettings.debug.json", optional: true)
                 .Build();
         }
     }
