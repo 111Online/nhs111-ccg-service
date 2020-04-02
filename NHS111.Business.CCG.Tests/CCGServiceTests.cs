@@ -1,15 +1,12 @@
-﻿using System;
-using System.Threading.Tasks;
-
-using Moq;
+﻿using Moq;
 using NUnit.Framework;
+using System;
+using System.Threading.Tasks;
 
 namespace NHS111.Business.CCG.Tests
 {
     using Domain.CCG;
     using Domain.CCG.Models;
-
-    using NHS111.Business.CCG.Models;
 
     using Services;
 
@@ -36,7 +33,7 @@ namespace NHS111.Business.CCG.Tests
             Assert.ThrowsAsync<ArgumentException>(() => CCGService().GetDetails(_invalidPostcode), TestContext.CurrentContext.Test.Expectation());
         }
 
-        [Test(Description="The CCG service should return a valid CCG model when one is returned from the repo.")]
+        [Test(Description = "The CCG service should return a valid CCG model when one is returned from the repo.")]
         public async Task Get_WithExistingPostcode_ReturnsCCG()
         {
             var ccgRepoResult = SetupMockCCGRepoResult();
@@ -77,7 +74,7 @@ namespace NHS111.Business.CCG.Tests
 
         private CCGEntity SetupMockCCGRepoResult()
         {
-            var repoResult = new CCGEntity {Postcode = "XXX", App = "some app", STP = "some stp", STPId = "5678", CCG = "some ccg", CCGId = "1234"};
+            var repoResult = new CCGEntity { Postcode = "XXX", App = "some app", STP = "some stp", STPId = "5678", CCG = "some ccg", CCGId = "1234" };
 
             _mockccgRepo.Setup(r => r.Get(It.IsAny<string>())).Returns(Task.FromResult(repoResult));
 
@@ -87,7 +84,7 @@ namespace NHS111.Business.CCG.Tests
         private STPEntity SetupMockSTPRepoResult()
         {
             var stpRepoResult = new STPEntity { CCGId = "1234", ProductName = "some app", STPName = "SomeStp", CCGName = "some ccg", ReferralServiceIdWhitelist = "55555|66666|77777", PharmacyServiceIdWhitelist = "9999|0000" };
-            
+
             _mockstpRepo.Setup(r => r.Get(It.IsAny<string>())).Returns(Task.FromResult(stpRepoResult));
 
             return stpRepoResult;
@@ -115,7 +112,7 @@ namespace NHS111.Business.CCG.Tests
 
         private CCGService CCGService()
         {
-           return new CCGService(_mockccgRepo.Object, _mockstpRepo.Object, _mockAzureAccountSettings.Object);
+            return new CCGService(_mockccgRepo.Object, _mockstpRepo.Object, _mockAzureAccountSettings.Object);
         }
 
         private string _validPostcode = "SO66 6UU";

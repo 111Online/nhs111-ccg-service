@@ -1,23 +1,18 @@
 ﻿namespace NHS111.DataImport.CCG
 {
-    using System;
-    using System.Collections.Generic;
-    using System.Diagnostics;
-    using System.IO;
-    using System.Linq;
-    using System.Text.RegularExpressions;
-    using System.Threading.Tasks;
-
     using CsvHelper;
-
     using Microsoft.WindowsAzure.Storage;
     using Microsoft.WindowsAzure.Storage.Auth;
     using Microsoft.WindowsAzure.Storage.Blob;
     using Microsoft.WindowsAzure.Storage.Table;
-
     using NHS111.Domain.CCG.Models;
-
     using OfficeOpenXml;
+    using System;
+    using System.Collections.Generic;
+    using System.IO;
+    using System.Linq;
+    using System.Text.RegularExpressions;
+    using System.Threading.Tasks;
 
     public class DataImport
     {
@@ -26,27 +21,27 @@
             _arguments = new Dictionary<string, string>();
 
             _ccgLookup = new Dictionary<string, PostcodeRecord>();
-            
+
             _dosSearchDistanceLookup = new Dictionary<string, int>();
 
             _dosSearchDistancePartialLookup = new Dictionary<string, int>();
         }
 
-        public void PerformImport(string[] args)
+        public async Task PerformImportAsync(string[] args)
         {
             try
             {
                 LoadSettings(args);
-                
-                Task.Run(UploadNationalWhitelist).GetAwaiter().GetResult();
 
-                Task.Run(LoadCCGLookupData).GetAwaiter().GetResult();
-                
+                await UploadNationalWhitelist();
+
+                await LoadCCGLookupData();
+
                 LoadDOSSearchDistanceLookupData();
-                
+
                 if (string.IsNullOrWhiteSpace(GetSetting("STPDataOnly")))
                 {
-                    RunImport();
+                    await RunImportAsync();
                 }
             }
             catch (Exception e)
@@ -56,20 +51,20 @@
                 throw new Exception("", e);
             }
         }
-        
+
         private async Task UploadNationalWhitelist()
         {
             try
             {
                 var filePath = GetSetting("whitelistFilePath");
-                
-                var content = File.ReadAllText(filePath);
-                
-                var blobName = filePath.Substring(filePath.LastIndexOf(@"\", StringComparison.Ordinal) +1);
-                
+
+                //var content = File.ReadAllText(filePath);
+
+                var blobName = filePath.Substring(filePath.LastIndexOf(@"\", StringComparison.Ordinal) + 1);
+
                 using (var fs = new FileStream(filePath, FileMode.Open))
                 {
-                    var blob = GetBlob(blobName).Result;
+                    var blob = await GetBlob(blobName);
 
                     await blob.UploadFromStreamAsync(fs);
                 }
@@ -162,7 +157,7 @@
                 var filePath = GetSetting("DosSaerchDistanceFilePath");
 
                 var package = new ExcelPackage(new FileInfo(filePath));
-                
+
                 var fullPostcodeSheet = package.Workbook.Worksheets[2];
 
                 for (var i = 1; i <= fullPostcodeSheet.Dimension.End.Row; i++)
@@ -185,7 +180,7 @@
             }
         }
 
-        public async void RunImport()
+        public async Task RunImportAsync()
         {
             try
             {
@@ -209,7 +204,7 @@
                     {
                         reader.Read();
                         reader.ReadHeader();
-                        
+
                         var elementCount = 0;
 
                         while (reader.Read())
@@ -275,7 +270,7 @@
                         }
                     }
                 }
-                
+
                 tasks.Add(ImportBatch(table, batch));
                 await Task.WhenAll(tasks);
             }
@@ -316,7 +311,7 @@
                         .Replace("-", string.Empty);
 
                     var value = t.Substring(t.IndexOf('=') + 1);
-                    
+
                     _arguments.Add(key, value);
                 }
             }
@@ -377,7 +372,7 @@
                 throw new Exception("", e);
             }
         }
-        
+
         private CloudTable GetTable(string name)
         {
             try
@@ -405,11 +400,11 @@
                 var client = storageAccount.CreateCloudBlobClient();
 
                 var container = client.GetContainerReference(BlobContainerName);
-                
+
                 await container.CreateIfNotExistsAsync();
 
                 var blob = container.GetBlockBlobReference(name);
-                
+
                 return blob;
             }
             catch (Exception e)
@@ -444,11 +439,11 @@
                 throw new Exception("", e);
             }
         }
-        
+
         private const string WhitespacePattern = @"\s+";
 
         private const string BlobContainerName = "epwhitelist";
-        
+
         private int _recordCount;
 
         private int _counter;
@@ -458,7 +453,7 @@
         private Dictionary<string, string> _arguments;
 
         private static Dictionary<string, PostcodeRecord> _ccgLookup;
-        
+
         private CloudStorageAccount _storageAccount;
 
         private Dictionary<string, int> _dosSearchDistanceLookup;

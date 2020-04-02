@@ -1,6 +1,5 @@
-﻿using System;
-
-using Microsoft.WindowsAzure.Storage.Table;
+﻿using Microsoft.WindowsAzure.Storage.Table;
+using System;
 
 namespace NHS111.Domain.CCG.Models
 {

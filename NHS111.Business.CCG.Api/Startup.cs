@@ -19,8 +19,9 @@
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            services.AddApplicationInsightsTelemetry();
             services.AddMvc();
-            services.AddTransient<IAzureAccountSettings, AzureAccountSettings>(p => new AzureAccountSettings(Configuration["connection"], Configuration["ccgtable"], Configuration["stptable"], Configuration["nationalwhitelistblobname"]));
+            services.AddTransient<IAzureAccountSettings, AzureAccountSettings>(p => new AzureAccountSettings(Configuration["StorageConnectionString"], Configuration["ccgtable"], Configuration["stptable"], Configuration["nationalwhitelistblobname"]));
             services.AddTransient<ICCGRepository, CCGRepository>();
             services.AddTransient<ISTPRepository, STPRepository>();
             services.AddTransient<ICCGService, CCGService>();

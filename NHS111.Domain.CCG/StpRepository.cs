@@ -1,8 +1,8 @@
-﻿using System.Collections.Generic;
-using System.Threading.Tasks;
-using Microsoft.WindowsAzure.Storage;
+﻿using Microsoft.WindowsAzure.Storage;
 using Microsoft.WindowsAzure.Storage.Table;
 using NHS111.Domain.CCG.Models;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace NHS111.Domain.CCG
 {
@@ -15,23 +15,21 @@ namespace NHS111.Domain.CCG
             var storageAccount = CloudStorageAccount.Parse(settings.ConnectionString);
             var tableClient = storageAccount.CreateCloudTableClient();
             _table = tableClient.GetTableReference(settings.STPTableReference);
+
+            _table.CreateIfNotExistsAsync().GetAwaiter().GetResult();
         }
 
         public async Task<STPEntity> Get(string ccgId)
         {
-            await _table.CreateIfNotExistsAsync();
-
             var operation = TableOperation.Retrieve<STPEntity>("CCGs", ccgId);
 
-            var result = await  _table.ExecuteAsync(operation);
+            var result = await _table.ExecuteAsync(operation);
 
             return result.Result as STPEntity;
         }
 
         public async Task<List<STPEntity>> List()
         {
-            await _table.CreateIfNotExistsAsync();
-
             TableContinuationToken token = null;
 
             var entities = new List<STPEntity>();

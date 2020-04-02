@@ -1,6 +1,5 @@
-﻿using System.ComponentModel;
-
-using NUnit.Framework;
+﻿using NUnit.Framework;
+using System.ComponentModel;
 
 namespace NHS111.Business.CCG.Functional.Tests.Tools
 {

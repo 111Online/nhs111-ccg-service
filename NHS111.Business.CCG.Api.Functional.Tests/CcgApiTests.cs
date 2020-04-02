@@ -1,11 +1,11 @@
-using System.IO;
-using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;
 using NHS111.Business.CCG.Functional.Tests.Tools;
 using NHS111.Business.CCG.Models;
 using NUnit.Framework;
 using RestSharp;
+using System.IO;
+using System.Threading.Tasks;
 
 namespace NHS111.Business.CCG.Api.Functional.Tests
 {
@@ -14,7 +14,7 @@ namespace NHS111.Business.CCG.Api.Functional.Tests
     {
         private IConfiguration _config;
         private IRestClient _restClient;
-        
+
         [SetUp]
         public void SetUp()
         {

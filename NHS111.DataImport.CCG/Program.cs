@@ -1,12 +1,14 @@
-﻿namespace NHS111.DataImport.CCG
+﻿using System.Threading.Tasks;
+
+namespace NHS111.DataImport.CCG
 {
     public class Program
     {
-        public static void Main(string[] args)
+        public static async Task Main(string[] args)
         {
             var import = new DataImport();
 
-            import.PerformImport(args);
+            await import.PerformImportAsync(args);
         }
     }
 }

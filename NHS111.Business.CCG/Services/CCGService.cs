@@ -1,28 +1,34 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
-
-using System;
 using System.Threading.Tasks;
 
 namespace NHS111.Business.CCG.Services
 {
-    using System.IO;
-
     using Domain.CCG;
     using Domain.CCG.Models;
-
     using Microsoft.WindowsAzure.Storage;
     using Microsoft.WindowsAzure.Storage.Blob;
-
     using Models;
+    using System.IO;
 
     public class CCGService : ICCGService
     {
+        private CloudBlobContainer _container;
+
         public CCGService(ICCGRepository ccgRepository, ISTPRepository stpRepository, IAzureAccountSettings azureAccountSettings)
         {
             _ccgRepository = ccgRepository;
             _stpRepository = stpRepository;
             _azureAccountSettings = azureAccountSettings;
+
+            var storageAccount = CloudStorageAccount.Parse(_azureAccountSettings.ConnectionString);
+
+            var client = storageAccount.CreateCloudBlobClient();
+
+            _container = client.GetContainerReference(BlobContainerName);
+
+            _container.CreateIfNotExistsAsync().GetAwaiter().GetResult();
         }
 
         public async Task<CCGModel> GetCCGDetails(string postcode)
@@ -118,7 +124,7 @@ namespace NHS111.Business.CCG.Services
             postcode = NormalisePostcode(postcode);
 
             var ccgResult = await _ccgRepository.Get(postcode);
-            
+
             if (ccgResult == null)
             {
                 return null;
@@ -130,18 +136,18 @@ namespace NHS111.Business.CCG.Services
             }
 
             var stpResult = await _stpRepository.Get(ccgResult.CCGId);
-            
+
             if (stpResult != null && !string.IsNullOrWhiteSpace(stpResult.PharmacyServiceIdWhitelist))
             {
                 stpResult.PharmacyServiceIdWhitelist = await AppendNationalWhitelistToGPOutOfHours(stpResult.PharmacyServiceIdWhitelist);
             }
-            
+
             return DetailsMap(ccgResult, stpResult);
         }
 
         private async Task<string> AppendNationalWhitelistToGPOutOfHours(string gpOutOfHours)
         {
-            var blob = GetBlob(_azureAccountSettings.NationalWhitelistBlobName + ".csv").Result;
+            var blob = GetBlob(_azureAccountSettings.NationalWhitelistBlobName + ".csv");
 
             var allServices = new List<string>();
 
@@ -167,19 +173,11 @@ namespace NHS111.Business.CCG.Services
             return string.Join('|', allServices);
         }
 
-        private async Task<CloudBlockBlob> GetBlob(string name)
+        private CloudBlockBlob GetBlob(string name)
         {
             try
             {
-                var storageAccount = CloudStorageAccount.Parse(_azureAccountSettings.ConnectionString);
-
-                var client = storageAccount.CreateCloudBlobClient();
-
-                var container = client.GetContainerReference(BlobContainerName);
-
-                await container.CreateIfNotExistsAsync();
-
-                var blob = container.GetBlockBlobReference(name);
+                var blob = _container.GetBlockBlobReference(name);
 
                 return blob;
             }
@@ -190,7 +188,7 @@ namespace NHS111.Business.CCG.Services
                 throw new Exception("", e);
             }
         }
-        
+
         private const string BlobContainerName = "epwhitelist";
 
         public async Task<List<CCGSummaryModel>> List()
