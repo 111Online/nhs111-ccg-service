@@ -27,7 +27,8 @@
 
         public async Task<CCGEntity> Get(string postcode)
         {
-            var retrieveOperation = TableOperation.Retrieve<CCGEntity>("Postcodes", postcode);
+            var partitionKey = postcode?.Length > 1 ? postcode.Substring(0, 2).Trim() : "emptypostcode";
+            var retrieveOperation = TableOperation.Retrieve<CCGEntity>(partitionKey, postcode);
 
             var retrievedResult = await _table.ExecuteAsync(retrieveOperation);
 

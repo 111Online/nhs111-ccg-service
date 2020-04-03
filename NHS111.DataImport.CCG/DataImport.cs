@@ -243,7 +243,7 @@
                                     CCGId = ccgId,
                                     Postcode = postcode,
                                     App = _ccgLookup.ContainsKey(ccgId) ? _ccgLookup[ccgId].AppName : "",
-                                    PartitionKey = "Postcodes",
+                                    PartitionKey = postcode?.Length > 1 ? postcode.Substring(0, 2).Trim() : "emptypostcode", //"Postcodes",
                                     RowKey = RemoveWhitespace(postcode),
                                     DOSSearchDistance = dosSearchDistance
                                 }));
