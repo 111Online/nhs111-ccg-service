@@ -9,6 +9,7 @@
     using OfficeOpenXml;
     using System;
     using System.Collections.Generic;
+    using System.Diagnostics;
     using System.IO;
     using System.Linq;
     using System.Text.RegularExpressions;
@@ -31,23 +32,38 @@
         {
             try
             {
+                Console.WriteLine("Beginning Data import");
+
                 LoadSettings(args);
 
+                Console.WriteLine("Uploading National Whitelist");
                 await UploadNationalWhitelist();
+                Console.WriteLine("Finished uploading National Whitelist");
+
+                Console.WriteLine("Beginning CCG Lookup Data loading");
+                var clock = new Stopwatch();
+                clock.Start();
 
                 await LoadCCGLookupData();
+
+                clock.Stop();
+                Console.WriteLine("finished importing in " + clock.Elapsed.ToString(@"hh\:mm\:ss"));
 
                 LoadDOSSearchDistanceLookupData();
 
                 if (string.IsNullOrWhiteSpace(GetSetting("STPDataOnly")))
                 {
+                    Console.WriteLine("Beginning CCG loading");
+                    clock.Restart();
                     await RunImportAsync();
+                    clock.Stop();
+                    Console.WriteLine("finished importing in " + clock.Elapsed.ToString(@"hh\:mm\:ss"));
                 }
             }
             catch (Exception e)
             {
                 // TODO: Add application logging
-
+                Console.WriteLine($"Exception in {nameof(PerformImportAsync)}: {e.Message}");
                 throw new Exception("", e);
             }
         }
@@ -57,22 +73,16 @@
             try
             {
                 var filePath = GetSetting("whitelistFilePath");
+                var blobName = Path.GetFileName(filePath);
+                Console.WriteLine($"Using National Whitelist file name={blobName}");
 
-                //var content = File.ReadAllText(filePath);
-
-                var blobName = filePath.Substring(filePath.LastIndexOf(@"\", StringComparison.Ordinal) + 1);
-
-                using (var fs = new FileStream(filePath, FileMode.Open))
-                {
-                    var blob = await GetBlob(blobName);
-
-                    await blob.UploadFromStreamAsync(fs);
-                }
+                var blob = await GetBlob(blobName);
+                await blob.UploadFromFileAsync(filePath);
             }
             catch (Exception e)
             {
                 // TODO: Add application logging
-
+                Console.WriteLine($"Exception in {nameof(UploadNationalWhitelist)}: {e.Message}");
                 throw new Exception("", e);
             }
         }
@@ -145,7 +155,7 @@
             catch (Exception e)
             {
                 // TODO: Add application logging
-
+                Console.WriteLine($"Exception in {nameof(LoadCCGLookupData)}: {e.Message}");
                 throw new Exception("", e);
             }
         }
@@ -157,6 +167,7 @@
                 var filePath = GetSetting("DosSaerchDistanceFilePath");
 
                 var package = new ExcelPackage(new FileInfo(filePath));
+                Console.WriteLine("Loading DOS search distance Data");
 
                 var fullPostcodeSheet = package.Workbook.Worksheets[2];
 
@@ -171,11 +182,13 @@
                 {
                     _dosSearchDistancePartialLookup.Add(RemoveWhitespace(partialPostcodeSheet.Cells[i, 1].Value.ToString()), Convert.ToInt32(partialPostcodeSheet.Cells[i, 2].Value));
                 }
+
+                Console.WriteLine("Finished loading DOS search distance Data");
             }
             catch (Exception e)
             {
                 // TODO: Add application logging
-
+                Console.WriteLine($"Exception in {nameof(LoadDOSSearchDistanceLookupData)}: {e.Message}");
                 throw new Exception("", e);
             }
         }
@@ -273,11 +286,12 @@
 
                 tasks.Add(ImportBatch(table, batch));
                 await Task.WhenAll(tasks);
+                Console.WriteLine("DOS Search distance not mapped count: " + noDosSearchDistanceCount);
             }
             catch (Exception e)
             {
                 // TODO: Add application logging
-
+                Console.WriteLine($"Exception in {nameof(RunImportAsync)}: {e.Message}");
                 throw new Exception("", e);
             }
         }
@@ -291,11 +305,12 @@
                 var newCount = _counter + importedCount.Count;
 
                 _counter = newCount;
+                Console.WriteLine("Imported " + _counter + " records (" + _terminatedPostcodesCount + " terminated) of " + _recordCount + " (" + CalculatePercentDone() + "%)");
             }
             catch (Exception e)
             {
                 // TODO: Add application logging
-
+                Console.WriteLine($"Exception in {nameof(ImportBatch)}: {e.Message}");
                 throw new Exception("", e);
             }
         }
@@ -318,7 +333,7 @@
             catch (Exception e)
             {
                 // TODO: Add application logging
-
+                Console.WriteLine($"Exception in {nameof(LoadSettings)}: {e.Message}");
                 throw new Exception("", e);
             }
         }
