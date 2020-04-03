@@ -32,9 +32,9 @@
         {
             try
             {
-                Console.WriteLine("Beginning Data import");
-
                 LoadSettings(args);
+
+                Console.WriteLine($"Beginning Data import to storage account {GetSetting("AccountName")}");
 
                 Console.WriteLine("Uploading National Whitelist");
                 await UploadNationalWhitelist();
@@ -47,7 +47,7 @@
                 await LoadCCGLookupData();
 
                 clock.Stop();
-                Console.WriteLine("finished importing in " + clock.Elapsed.ToString(@"hh\:mm\:ss"));
+                Console.WriteLine("Finished importing CCG Lookup Data in " + clock.Elapsed.ToString(@"hh\:mm\:ss"));
 
                 LoadDOSSearchDistanceLookupData();
 
@@ -57,7 +57,7 @@
                     clock.Restart();
                     await RunImportAsync();
                     clock.Stop();
-                    Console.WriteLine("finished importing in " + clock.Elapsed.ToString(@"hh\:mm\:ss"));
+                    Console.WriteLine("Finished importing CCG in " + clock.Elapsed.ToString(@"hh\:mm\:ss"));
                 }
             }
             catch (Exception e)
