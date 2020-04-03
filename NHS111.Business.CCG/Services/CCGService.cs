@@ -21,14 +21,6 @@ namespace NHS111.Business.CCG.Services
             _ccgRepository = ccgRepository;
             _stpRepository = stpRepository;
             _azureAccountSettings = azureAccountSettings;
-
-            var storageAccount = CloudStorageAccount.Parse(_azureAccountSettings.ConnectionString);
-
-            var client = storageAccount.CreateCloudBlobClient();
-
-            _container = client.GetContainerReference(BlobContainerName);
-
-            _container.CreateIfNotExistsAsync().GetAwaiter().GetResult();
         }
 
         public async Task<CCGModel> GetCCGDetails(string postcode)
@@ -147,7 +139,7 @@ namespace NHS111.Business.CCG.Services
 
         private async Task<string> AppendNationalWhitelistToGPOutOfHours(string gpOutOfHours)
         {
-            var blob = GetBlob(_azureAccountSettings.NationalWhitelistBlobName + ".csv");
+            var blob = await GetBlob(_azureAccountSettings.NationalWhitelistBlobName + ".csv");
 
             var allServices = new List<string>();
 
@@ -173,10 +165,20 @@ namespace NHS111.Business.CCG.Services
             return string.Join('|', allServices);
         }
 
-        private CloudBlockBlob GetBlob(string name)
+        private async Task<CloudBlockBlob> GetBlob(string name)
         {
             try
             {
+                if (_container == null)
+                {
+                    var storageAccount = CloudStorageAccount.Parse(_azureAccountSettings.ConnectionString);
+
+                    var client = storageAccount.CreateCloudBlobClient();
+
+                    _container = client.GetContainerReference(BlobContainerName);
+
+                    await _container.CreateIfNotExistsAsync();
+                }
                 var blob = _container.GetBlockBlobReference(name);
 
                 return blob;
