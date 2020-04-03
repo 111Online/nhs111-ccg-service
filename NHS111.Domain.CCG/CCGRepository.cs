@@ -9,7 +9,7 @@
     {
         Task<CCGEntity> Get(string postcode);
     }
-
+     
     public class CCGRepository : ICCGRepository
     {
         private readonly CloudTable _table;

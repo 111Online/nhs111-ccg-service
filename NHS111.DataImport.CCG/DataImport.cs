@@ -97,8 +97,6 @@
 
                 var filePath = GetSetting("ccgCsvFilePath");
 
-                var lastPartitionKey = "";
-
                 using (var sr = new StreamReader(filePath))
                 {
                     using (var reader = new CsvReader(sr))
@@ -110,25 +108,13 @@
 
                         while (reader.Read())
                         {
-                            var stpId = reader.GetField<string>("STP17CD");
-                            var partitionKey = !string.IsNullOrEmpty(stpId) ? stpId : "emptystpid";
-
-                            // In each batch we can only have one partition key. Hence, when we go to the next key, we need so send and empty the batch first
-                            if (batch.Count > 0 && (partitionKey != lastPartitionKey || batch.Count % 100 == 0))
-                            {
-                                await stpTable.ExecuteBatchAsync(batch);
-                                batch = new TableBatchOperation();
-                            }
-
-                            lastPartitionKey = partitionKey;
-
                             batch.Add(TableOperation.InsertOrReplace(
                                     new STPEntity
                                     {
-                                        PartitionKey = partitionKey,
+                                        PartitionKey = "CCG",
                                         RowKey = reader.GetField<string>("CCG16CD"),
                                         CCGId = reader.GetField<string>("CCG16CD"),
-                                        STPId = stpId,
+                                        STPId = reader.GetField<string>("STP17CD"),
                                         STPName = reader.GetField<string>("STP17NM"),
                                         CCGName = reader.GetField<string>("CCG16NM"),
                                         ProductName = reader.GetField<string>("Product"),
@@ -149,6 +135,12 @@
                                         CCGId = reader.GetField<string>("CCG16CD")
                                     });
                             }
+
+                            if (batch.Count % 100 == 0)
+                            {
+                                await stpTable.ExecuteBatchAsync(batch);
+                                batch = new TableBatchOperation();
+                            }
                         }
 
                         if (batch.Count > 0)
@@ -162,7 +154,7 @@
             {
                 // TODO: Add application logging
                 Console.WriteLine($"Exception in {nameof(LoadCCGLookupData)}: {e.Message}");
-                //throw new Exception("", e);
+                throw new Exception("", e);
             }
         }
 
