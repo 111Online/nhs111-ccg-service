@@ -52,7 +52,7 @@ namespace NHS111.Business.CCG.Services
                 throw new ArgumentOutOfRangeException("Postcode does not have CCGId specified", new Exception(""));
             }
 
-            var stpResult = await _stpRepository.Get(ccgResult.CCGId);
+            var stpResult = await _stpRepository.Get(ccgResult.STPId, ccgResult.CCGId);
 
             return MapCcgToStp(ccgResult, stpResult);
         }
@@ -135,7 +135,7 @@ namespace NHS111.Business.CCG.Services
                 throw new ArgumentOutOfRangeException("Postcode does not have CCGId specified", new Exception(""));
             }
 
-            var stpResult = await _stpRepository.Get(ccgResult.CCGId);
+            var stpResult = await _stpRepository.Get(ccgResult.STPId, ccgResult.CCGId);
 
             if (stpResult != null && !string.IsNullOrWhiteSpace(stpResult.PharmacyServiceIdWhitelist))
             {

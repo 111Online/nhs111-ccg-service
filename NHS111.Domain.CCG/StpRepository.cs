@@ -19,9 +19,9 @@ namespace NHS111.Domain.CCG
             _table.CreateIfNotExistsAsync().GetAwaiter().GetResult();
         }
 
-        public async Task<STPEntity> Get(string ccgId)
+        public async Task<STPEntity> Get(string stpId, string ccgId)
         {
-            var operation = TableOperation.Retrieve<STPEntity>("CCGs", ccgId);
+            var operation = TableOperation.Retrieve<STPEntity>(stpId, ccgId);
 
             var result = await _table.ExecuteAsync(operation);
 

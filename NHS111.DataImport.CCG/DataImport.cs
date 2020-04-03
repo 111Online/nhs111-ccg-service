@@ -93,9 +93,11 @@
             {
                 var tableReference = GetSetting("ccgTableRef");
 
-                var stpTable = GetTable(tableReference);
+                var stpTable = await GetTable(tableReference);
 
                 var filePath = GetSetting("ccgCsvFilePath");
+
+                var lastPartitionKey = "";
 
                 using (var sr = new StreamReader(filePath))
                 {
@@ -108,14 +110,25 @@
 
                         while (reader.Read())
                         {
-                            batch.Add(
-                                TableOperation.InsertOrReplace(
+                            var stpId = reader.GetField<string>("STP17CD");
+                            var partitionKey = !string.IsNullOrEmpty(stpId) ? stpId : "emptystpid";
+
+                            // In each batch we can only have one partition key. Hence, when we go to the next key, we need so send and empty the batch first
+                            if (batch.Count > 0 && (partitionKey != lastPartitionKey || batch.Count % 100 == 0))
+                            {
+                                await stpTable.ExecuteBatchAsync(batch);
+                                batch = new TableBatchOperation();
+                            }
+
+                            lastPartitionKey = partitionKey;
+
+                            batch.Add(TableOperation.InsertOrReplace(
                                     new STPEntity
                                     {
-                                        PartitionKey = "CCGs",
+                                        PartitionKey = partitionKey,
                                         RowKey = reader.GetField<string>("CCG16CD"),
                                         CCGId = reader.GetField<string>("CCG16CD"),
-                                        STPId = reader.GetField<string>("STP17CD"),
+                                        STPId = stpId,
                                         STPName = reader.GetField<string>("STP17NM"),
                                         CCGName = reader.GetField<string>("CCG16NM"),
                                         ProductName = reader.GetField<string>("Product"),
@@ -136,13 +149,6 @@
                                         CCGId = reader.GetField<string>("CCG16CD")
                                     });
                             }
-
-                            if (batch.Count % 100 == 0)
-                            {
-                                await stpTable.ExecuteBatchAsync(batch);
-
-                                batch = new TableBatchOperation();
-                            }
                         }
 
                         if (batch.Count > 0)
@@ -156,7 +162,7 @@
             {
                 // TODO: Add application logging
                 Console.WriteLine($"Exception in {nameof(LoadCCGLookupData)}: {e.Message}");
-                throw new Exception("", e);
+                //throw new Exception("", e);
             }
         }
 
@@ -200,7 +206,7 @@
                 const int BatchSizeMax = 100;
 
                 var tableReference = GetSetting("TableRef");
-                var table = GetTable(tableReference);
+                var table = await GetTable(tableReference);
 
                 var filePath = GetSetting("CSVFilePath");
                 _recordCount = File.ReadLines(filePath).Count() - 1;
@@ -219,6 +225,8 @@
                         reader.ReadHeader();
 
                         var elementCount = 0;
+
+                        string lastPartitionKey = "";
 
                         while (reader.Read())
                         {
@@ -250,25 +258,30 @@
                                     noDosSearchDistanceCount++;
                                 }
 
+                                var partitionKey = postcode?.Length > 1 ? postcode.Substring(0, 2).Trim() : "emptypostcode";
+
+                                // In each batch we can only have one partition key. Hence, when we go to the next key, we need so send and empty the batch first
+                                if (elementCount > 0 && (partitionKey != lastPartitionKey || elementCount % BatchSizeMax == 0))
+                                {
+                                    var task = ImportBatch(table, batch);
+                                    tasks.Add(task);
+                                    batch = new TableBatchOperation();
+                                }
+
+                                lastPartitionKey = partitionKey;
+
                                 batch.Add(TableOperation.InsertOrReplace(new CCGEntity
                                 {
                                     CCG = _ccgLookup.ContainsKey(ccgId) ? _ccgLookup[ccgId].CcgName : "",
                                     CCGId = ccgId,
                                     Postcode = postcode,
                                     App = _ccgLookup.ContainsKey(ccgId) ? _ccgLookup[ccgId].AppName : "",
-                                    PartitionKey = postcode?.Length > 1 ? postcode.Substring(0, 2).Trim() : "emptypostcode", //"Postcodes",
+                                    PartitionKey = partitionKey, //"Postcodes",
                                     RowKey = RemoveWhitespace(postcode),
                                     DOSSearchDistance = dosSearchDistance
                                 }));
 
                                 elementCount++;
-
-                                if (elementCount % BatchSizeMax == 0)
-                                {
-                                    var task = ImportBatch(table, batch);
-                                    tasks.Add(task);
-                                    batch = new TableBatchOperation();
-                                }
 
                                 if (tasks.Count == 25)
                                 {
@@ -388,7 +401,7 @@
             }
         }
 
-        private CloudTable GetTable(string name)
+        private async Task<CloudTable> GetTable(string name)
         {
             try
             {
@@ -396,7 +409,9 @@
 
                 var tableClient = storageAccount.CreateCloudTableClient();
 
-                return tableClient.GetTableReference(name);
+                var tableRef = tableClient.GetTableReference(name);
+                await tableRef.CreateIfNotExistsAsync();
+                return tableRef;
             }
             catch (Exception e)
             {
