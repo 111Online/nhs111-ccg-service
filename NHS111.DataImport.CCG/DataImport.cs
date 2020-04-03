@@ -91,7 +91,7 @@
         {
             try
             {
-                var tableReference = GetSetting("ccgTableRef");
+                var tableReference = GetSetting("stpTableRef");
 
                 var stpTable = await GetTable(tableReference);
 
@@ -170,10 +170,10 @@
         {
             try
             {
-                var filePath = GetSetting("DosSaerchDistanceFilePath");
+                var filePath = GetSetting("DosSearchDistanceFilePath");
 
                 var package = new ExcelPackage(new FileInfo(filePath));
-                Console.WriteLine("Loading DOS search distance Data");
+                Console.WriteLine($"Loading DOS search distance Data from file {filePath}");
 
                 var fullPostcodeSheet = package.Workbook.Worksheets[2];
 
@@ -205,8 +205,8 @@
             {
                 const int BatchSizeMax = 100;
 
-                var tableReference = GetSetting("TableRef");
-                var table = await GetTable(tableReference);
+                var tableReference = GetSetting("ccgTableRef");
+                var ccgTable = await GetTable(tableReference);
 
                 var filePath = GetSetting("CSVFilePath");
                 _recordCount = File.ReadLines(filePath).Count() - 1;
@@ -263,7 +263,7 @@
                                 // In each batch we can only have one partition key. Hence, when we go to the next key, we need so send and empty the batch first
                                 if (elementCount > 0 && (partitionKey != lastPartitionKey || elementCount % BatchSizeMax == 0))
                                 {
-                                    var task = ImportBatch(table, batch);
+                                    var task = ImportBatch(ccgTable, batch);
                                     tasks.Add(task);
                                     batch = new TableBatchOperation();
                                 }
@@ -297,7 +297,7 @@
                     }
                 }
 
-                tasks.Add(ImportBatch(table, batch));
+                tasks.Add(ImportBatch(ccgTable, batch));
                 await Task.WhenAll(tasks);
                 Console.WriteLine("DOS Search distance not mapped count: " + noDosSearchDistanceCount);
             }
