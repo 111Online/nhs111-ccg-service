@@ -21,12 +21,11 @@
             var tableClient = storageAccount.CreateCloudTableClient();
 
             _table = tableClient.GetTableReference(settings.CCGTableReference);
+            _table.CreateIfNotExistsAsync();
         }
 
         public async Task<CCGEntity> Get(string postcode)
         {
-            await _table.CreateIfNotExistsAsync();
-
             var retrieveOperation = TableOperation.Retrieve<CCGEntity>("Postcodes", postcode);
 
             var retrievedResult = await _table.ExecuteAsync(retrieveOperation);

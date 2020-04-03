@@ -15,12 +15,11 @@ namespace NHS111.Domain.CCG
             var storageAccount = CloudStorageAccount.Parse(settings.ConnectionString);
             var tableClient = storageAccount.CreateCloudTableClient();
             _table = tableClient.GetTableReference(settings.STPTableReference);
+            _table.CreateIfNotExistsAsync();
         }
 
         public async Task<STPEntity> Get(string ccgId)
         {
-            await _table.CreateIfNotExistsAsync();
-
             var operation = TableOperation.Retrieve<STPEntity>("CCGs", ccgId);
 
             var result = await  _table.ExecuteAsync(operation);
@@ -30,8 +29,6 @@ namespace NHS111.Domain.CCG
 
         public async Task<List<STPEntity>> List()
         {
-            await _table.CreateIfNotExistsAsync();
-
             TableContinuationToken token = null;
 
             var entities = new List<STPEntity>();
