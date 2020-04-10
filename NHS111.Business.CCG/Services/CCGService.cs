@@ -137,32 +137,40 @@ namespace NHS111.Business.CCG.Services
             return DetailsMap(ccgResult, stpResult);
         }
 
+
+        private List<string> allServices = null;
+
         private async Task<string> AppendNationalWhitelistToGPOutOfHours(string gpOutOfHours)
         {
-            var blob = await GetBlob(_azureAccountSettings.NationalWhitelistBlobName + ".csv");
-
-            var allServices = new List<string>();
-
-            using (var ms = new MemoryStream())
+            // Download the whitelist file only once
+            if (allServices == null)
             {
-                await blob.DownloadToStreamAsync(ms);
+                allServices = new List<string>();
 
-                ms.Position = 0;
+                var blob = await GetBlob(_azureAccountSettings.NationalWhitelistBlobName + ".csv");
 
-                using (var sr = new StreamReader(ms))
+                using (var ms = new MemoryStream())
                 {
-                    var nationalWhitelist = sr.ReadToEnd();
+                    await blob.DownloadToStreamAsync(ms);
 
-                    if (!string.IsNullOrWhiteSpace(nationalWhitelist))
+                    ms.Position = 0;
+
+                    using (var sr = new StreamReader(ms))
                     {
-                        allServices.AddRange(nationalWhitelist.Split('|'));
+                        var nationalWhitelist = sr.ReadToEnd();
+
+                        if (!string.IsNullOrWhiteSpace(nationalWhitelist))
+                        {
+                            allServices.AddRange(nationalWhitelist.Split('|'));
+                        }
                     }
                 }
             }
-
-            allServices.AddRange(gpOutOfHours.Split('|'));
-
-            return string.Join('|', allServices);
+            var tempAllServices = new List<string>();
+            tempAllServices.AddRange(allServices);
+            tempAllServices.AddRange(gpOutOfHours.Split('|'));
+            
+            return string.Join('|', tempAllServices);
         }
 
         private async Task<CloudBlockBlob> GetBlob(string name)
