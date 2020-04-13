@@ -21,10 +21,10 @@
         {
             services.AddApplicationInsightsTelemetry();
             services.AddMvc();
-            services.AddTransient<IAzureAccountSettings, AzureAccountSettings>(p => new AzureAccountSettings(Configuration["StorageConnectionString"], Configuration["ccgtable"], Configuration["stptable"], Configuration["nationalwhitelistblobname"]));
-            services.AddTransient<ICCGRepository, CCGRepository>();
-            services.AddTransient<ISTPRepository, STPRepository>();
-            services.AddTransient<ICCGService, CCGService>();
+            services.AddSingleton<IAzureAccountSettings, AzureAccountSettings>(p => new AzureAccountSettings(Configuration["StorageConnectionString"], Configuration["ccgtable"], Configuration["stptable"], Configuration["nationalwhitelistblobname"]));
+            services.AddSingleton<ICCGRepository, CCGRepository>();
+            services.AddSingleton<ISTPRepository, STPRepository>();
+            services.AddSingleton<ICCGService, CCGService>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
