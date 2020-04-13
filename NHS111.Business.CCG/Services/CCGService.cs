@@ -145,25 +145,14 @@ namespace NHS111.Business.CCG.Services
             // Download the whitelist file only once
             if (allServices == null)
             {
+                var blob = await GetBlob(_azureAccountSettings.NationalWhitelistBlobName + ".csv");
+                var nationalWhitelist = await blob.DownloadTextAsync();
+
                 allServices = new List<string>();
 
-                var blob = await GetBlob(_azureAccountSettings.NationalWhitelistBlobName + ".csv");
-
-                using (var ms = new MemoryStream())
+                if (!string.IsNullOrWhiteSpace(nationalWhitelist))
                 {
-                    await blob.DownloadToStreamAsync(ms);
-
-                    ms.Position = 0;
-
-                    using (var sr = new StreamReader(ms))
-                    {
-                        var nationalWhitelist = sr.ReadToEnd();
-
-                        if (!string.IsNullOrWhiteSpace(nationalWhitelist))
-                        {
-                            allServices.AddRange(nationalWhitelist.Split('|'));
-                        }
-                    }
+                    allServices.AddRange(nationalWhitelist.Split('|'));
                 }
             }
             var tempAllServices = new List<string>();
