@@ -137,29 +137,17 @@ namespace NHS111.Business.CCG.Services
             return DetailsMap(ccgResult, stpResult);
         }
 
-
-        private List<string> allServices = null;
+        private string nationalWhitelist = null;
 
         private async Task<string> AppendNationalWhitelistToGPOutOfHours(string gpOutOfHours)
         {
             // Download the whitelist file only once
-            if (allServices == null)
+            if (nationalWhitelist == null)
             {
                 var blob = await GetBlob(_azureAccountSettings.NationalWhitelistBlobName + ".csv");
-                var nationalWhitelist = await blob.DownloadTextAsync();
-
-                allServices = new List<string>();
-
-                if (!string.IsNullOrWhiteSpace(nationalWhitelist))
-                {
-                    allServices.AddRange(nationalWhitelist.Split('|'));
-                }
+                nationalWhitelist = await blob.DownloadTextAsync();
             }
-            var tempAllServices = new List<string>();
-            tempAllServices.AddRange(allServices);
-            tempAllServices.AddRange(gpOutOfHours.Split('|'));
-            
-            return string.Join('|', tempAllServices);
+            return string.Join('|', nationalWhitelist, gpOutOfHours);
         }
 
         private async Task<CloudBlockBlob> GetBlob(string name)
