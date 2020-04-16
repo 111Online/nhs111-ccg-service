@@ -17,12 +17,8 @@
         public CCGRepository(IAzureAccountSettings settings)
         {
             var storageAccount = CloudStorageAccount.Parse(settings.ConnectionString);
-
             var tableClient = storageAccount.CreateCloudTableClient();
-
             _table = tableClient.GetTableReference(settings.CCGTableReference);
-
-            _table.CreateIfNotExistsAsync().GetAwaiter().GetResult();
         }
 
         public async Task<CCGEntity> Get(string postcode)

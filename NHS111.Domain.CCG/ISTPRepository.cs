@@ -6,7 +6,7 @@
 
     public interface ISTPRepository
     {
-        STPEntity Get(string ccgId);
+        Task<STPEntity> Get(string ccgId);
 
         Task<List<STPEntity>> List();
     }

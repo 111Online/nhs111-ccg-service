@@ -12,7 +12,7 @@ namespace NHS111.Domain.CCG
     public class STPRepository : ISTPRepository
     {
         private readonly CloudTable _table;
-        private List<STPEntity> allEntities = new List<STPEntity>();
+        private List<STPEntity> allEntities = null;
 
 
         public STPRepository(IAzureAccountSettings settings)
@@ -20,11 +20,6 @@ namespace NHS111.Domain.CCG
             var storageAccount = CloudStorageAccount.Parse(settings.ConnectionString);
             var tableClient = storageAccount.CreateCloudTableClient();
             _table = tableClient.GetTableReference(settings.STPTableReference);
-
-            _table.CreateIfNotExistsAsync().GetAwaiter().GetResult();
-
-            // Preload all STP entities into memory on startup
-            allEntities = LoadEntitiesIntoMemory().GetAwaiter().GetResult();
         }
 
         private async Task<List<STPEntity>> LoadEntitiesIntoMemory()
@@ -42,8 +37,14 @@ namespace NHS111.Domain.CCG
             return entities;
         }
 
-        public STPEntity Get(string ccgId)
+        public async Task<STPEntity> Get(string ccgId)
         {
+            if(allEntities == null)
+            {
+                // Load all STP entities into memory on first call
+                allEntities = await LoadEntitiesIntoMemory();
+            }
+
             var res = allEntities.FirstOrDefault(e => e.CCGId == ccgId);
             if (res != null)
             {
@@ -67,6 +68,11 @@ namespace NHS111.Domain.CCG
 
         public async Task<List<STPEntity>> List()
         {
+            if (allEntities == null)
+            {
+                // Load all STP entities into memory on first call
+                allEntities = await LoadEntitiesIntoMemory();
+            }
             return allEntities;
         }
     }

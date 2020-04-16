@@ -60,7 +60,7 @@ namespace NHS111.Business.CCG.Tests
                 ReferralServiceIdWhitelist = "111111|222222|66666"
             };
 
-            _mockstpRepo.Setup(x => x.Get(It.IsAny<string>())).Returns(stpEntity);
+            _mockstpRepo.Setup(x => x.Get(It.IsAny<string>())).Returns(Task.FromResult(stpEntity));
 
             var actualResult = await CCGService().GetDetails(_validPostcode);
 
@@ -85,7 +85,7 @@ namespace NHS111.Business.CCG.Tests
         {
             var stpRepoResult = new STPEntity { CCGId = "1234", ProductName = "some app", STPName = "SomeStp", CCGName = "some ccg", ReferralServiceIdWhitelist = "55555|66666|77777", PharmacyServiceIdWhitelist = "9999|0000" };
 
-            _mockstpRepo.Setup(r => r.Get(It.IsAny<string>())).Returns(stpRepoResult);
+            _mockstpRepo.Setup(r => r.Get(It.IsAny<string>())).Returns(Task.FromResult(stpRepoResult));
 
             return stpRepoResult;
         }
