@@ -159,7 +159,10 @@ namespace NHS111.Business.CCG.Services
                     var storageAccount = CloudStorageAccount.Parse(_azureAccountSettings.ConnectionString);
                     var client = storageAccount.CreateCloudBlobClient();
                     _container = client.GetContainerReference(BlobContainerName);
-                    await _container.CreateIfNotExistsAsync();
+                    if(!await _container.ExistsAsync())
+                    {
+                        throw new Exception($"Whitelist blob container {BlobContainerName} does not exist");
+                    }
                 }
                 var blob = _container.GetBlockBlobReference(name);
 
