@@ -8,7 +8,7 @@ namespace NHS111.Business.CCG.Api.Test
 {
     using Controllers;
     using Models;
-    using Services;
+    using NHS111.Business.CCG.Services;
 
     [TestFixture]
     public class CCGControllerTests
