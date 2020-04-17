@@ -4,6 +4,7 @@
     using Microsoft.WindowsAzure.Storage;
     using Microsoft.WindowsAzure.Storage.Auth;
     using Microsoft.WindowsAzure.Storage.Blob;
+    using Microsoft.WindowsAzure.Storage.RetryPolicies;
     using Microsoft.WindowsAzure.Storage.Table;
     using NHS111.Domain.CCG.Models;
     using OfficeOpenXml;
@@ -305,9 +306,21 @@
         {
             try
             {
-                var importedCount = await table.ExecuteBatchAsync(batch);
+                var requestOptions = new TableRequestOptions();
+                requestOptions.RetryPolicy = new LinearRetry(TimeSpan.FromMilliseconds(500), 3);
+                requestOptions.MaximumExecutionTime = TimeSpan.FromMinutes(1);
+                requestOptions.ServerTimeout = TimeSpan.FromMinutes(1);
 
-                var newCount = _counter + importedCount.Count;
+                var context = new OperationContext();
+                context.ClientRequestID = "ccg-data-importer";
+                context.Retrying += (sender, args) =>
+                {
+                    Console.WriteLine($"WARN: Retrying batchimport. Error code={args?.RequestInformation?.ErrorCode}");
+                };
+
+                var importedResult = await table.ExecuteBatchAsync(batch, requestOptions, context);
+
+                var newCount = _counter + importedResult.Count;
 
                 _counter = newCount;
                 Console.WriteLine("Imported " + _counter + " records (" + _terminatedPostcodesCount + " terminated) of " + _recordCount + " (" + CalculatePercentDone() + "%)");
