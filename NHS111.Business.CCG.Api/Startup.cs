@@ -5,7 +5,8 @@
     using Microsoft.AspNetCore.Hosting;
     using Microsoft.Extensions.Configuration;
     using Microsoft.Extensions.DependencyInjection;
-    using Services;
+    using NHS111.Business.CCG.Services;
+    using NHS111.Business.CCG.Api.Services;
 
     public class Startup
     {
@@ -22,6 +23,7 @@
             services.AddApplicationInsightsTelemetry();
             services.AddMvc();
             services.AddSingleton<IAzureAccountSettings, AzureAccountSettings>(p => new AzureAccountSettings(Configuration["StorageConnectionString"], Configuration["ccgtable"], Configuration["stptable"], Configuration["nationalwhitelistblobname"]));
+            services.AddSingleton<IMonitorService>(new MonitorService());
             services.AddSingleton<ICCGRepository, CCGRepository>();
             services.AddSingleton<ISTPRepository, STPRepository>();
             services.AddSingleton<ICCGService, CCGService>();
