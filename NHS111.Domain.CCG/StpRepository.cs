@@ -1,8 +1,8 @@
 ﻿using Microsoft.WindowsAzure.Storage;
-using Microsoft.WindowsAzure.Storage.Shared.Protocol;
+using Microsoft.WindowsAzure.Storage.RetryPolicies;
 using Microsoft.WindowsAzure.Storage.Table;
-using Newtonsoft.Json;
 using NHS111.Domain.CCG.Models;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -22,6 +22,12 @@ namespace NHS111.Domain.CCG
             _table = tableClient.GetTableReference(settings.STPTableReference);
         }
 
+        private TableRequestOptions requestOptions = new TableRequestOptions()
+        {
+            ServerTimeout = TimeSpan.FromSeconds(5),
+            RetryPolicy = new LinearRetry(TimeSpan.FromMilliseconds(500), 3)
+        };
+
         private async Task<List<STPEntity>> LoadEntitiesIntoMemory()
         {
             TableContinuationToken token = null;
@@ -29,7 +35,7 @@ namespace NHS111.Domain.CCG
             var entities = new List<STPEntity>();
             do
             {
-                var queryResult = await _table.ExecuteQuerySegmentedAsync(new TableQuery<STPEntity>(), token);
+                var queryResult = await _table.ExecuteQuerySegmentedAsync(new TableQuery<STPEntity>(), token, requestOptions, null);
                 entities.AddRange(queryResult.Results);
                 token = queryResult.ContinuationToken;
             } while (token != null);
@@ -39,7 +45,7 @@ namespace NHS111.Domain.CCG
 
         public async Task<STPEntity> Get(string ccgId)
         {
-            if(allEntities == null)
+            if (allEntities == null)
             {
                 // Load all STP entities into memory on first call
                 allEntities = await LoadEntitiesIntoMemory();
