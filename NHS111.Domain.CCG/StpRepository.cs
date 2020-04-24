@@ -24,8 +24,8 @@ namespace NHS111.Domain.CCG
 
         private TableRequestOptions requestOptions = new TableRequestOptions()
         {
-            ServerTimeout = TimeSpan.FromSeconds(5),
-            MaximumExecutionTime = TimeSpan.FromSeconds(5),
+            ServerTimeout = TimeSpan.FromSeconds(3),
+            MaximumExecutionTime = TimeSpan.FromSeconds(3),
             RetryPolicy = new LinearRetry(TimeSpan.FromMilliseconds(500), 3)
         };
 
