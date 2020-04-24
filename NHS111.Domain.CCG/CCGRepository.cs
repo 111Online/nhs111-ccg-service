@@ -15,12 +15,15 @@ namespace NHS111.Domain.CCG
     public class CCGRepository : ICCGRepository
     {
         private readonly CloudTable _table;
+        private readonly bool _enablePostcodePartitionKey;
 
         public CCGRepository(IAzureAccountSettings settings)
         {
             var storageAccount = CloudStorageAccount.Parse(settings.ConnectionString);
             var tableClient = storageAccount.CreateCloudTableClient();
             _table = tableClient.GetTableReference(settings.CCGTableReference);
+
+            _enablePostcodePartitionKey = settings.EnablePostcodePartitionKey;
         }
 
         private TableRequestOptions requestOptions = new TableRequestOptions()
@@ -31,7 +34,10 @@ namespace NHS111.Domain.CCG
 
         public async Task<CCGEntity> Get(string postcode)
         {
-            var partitionKey = postcode?.Length > 1 ? postcode.Substring(0, 2).Trim() : "emptypostcode";
+            var partitionKey = "Postcodes";
+            if (_enablePostcodePartitionKey)
+                partitionKey = postcode?.Length > 1 ? postcode.Substring(0, 2).Trim() : "emptypostcode";
+
             var retrieveOperation = TableOperation.Retrieve<CCGEntity>(partitionKey, postcode);
 
             var retrievedResult = await _table.ExecuteAsync(retrieveOperation, requestOptions, null);
