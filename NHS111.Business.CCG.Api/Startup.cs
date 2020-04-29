@@ -22,7 +22,7 @@
         {
             services.AddApplicationInsightsTelemetry();
             services.AddMvc();
-            services.AddSingleton<IAzureAccountSettings, AzureAccountSettings>(p => new AzureAccountSettings(Configuration["StorageConnectionString"], Configuration["ccgtable"], Configuration["stptable"], Configuration["nationalwhitelistblobname"], Configuration["enablepostcodepartitionkey"]));
+            services.AddSingleton<IAzureAccountSettings, AzureAccountSettings>(p => new AzureAccountSettings(Configuration["StorageConnectionString"], Configuration["ccgtable"], Configuration["stptable"], Configuration["nationalwhitelistblobname"], Configuration["enablepostcodepartitionkey"], Configuration["PreferSecondaryStorageEndpoint"]));
             services.AddSingleton<IMonitorService>(new MonitorService());
             services.AddSingleton<ICCGRepository, CCGRepository>();
             services.AddSingleton<ISTPRepository, STPRepository>();
