@@ -9,11 +9,14 @@ namespace NHS111.Business.CCG.Services
     using Domain.CCG.Models;
     using Microsoft.WindowsAzure.Storage;
     using Microsoft.WindowsAzure.Storage.Blob;
+    using Microsoft.WindowsAzure.Storage.RetryPolicies;
     using Models;
     using System.IO;
 
     public class CCGService : ICCGService
     {
+        private const string WhitelistBlobContainerName = "epwhitelist";
+
         private CloudBlobContainer _container;
 
         public CCGService(ICCGRepository ccgRepository, ISTPRepository stpRepository, IAzureAccountSettings azureAccountSettings)
@@ -158,11 +161,10 @@ namespace NHS111.Business.CCG.Services
                 {
                     var storageAccount = CloudStorageAccount.Parse(_azureAccountSettings.ConnectionString);
                     var client = storageAccount.CreateCloudBlobClient();
-                    _container = client.GetContainerReference(BlobContainerName);
-                    if(!await _container.ExistsAsync())
-                    {
-                        throw new Exception($"Whitelist blob container {BlobContainerName} does not exist");
-                    }
+                    // when this flag is set to true, the geo-replicated endpoint will be used for reads (only applies to RA-GRS storage accounts)
+                    client.DefaultRequestOptions.LocationMode = _azureAccountSettings.PreferSecondaryStorageEndpoint ? LocationMode.SecondaryThenPrimary : LocationMode.PrimaryThenSecondary;
+
+                    _container = client.GetContainerReference(WhitelistBlobContainerName);
                 }
                 var blob = _container.GetBlockBlobReference(name);
 
@@ -175,8 +177,6 @@ namespace NHS111.Business.CCG.Services
                 throw new Exception("", e);
             }
         }
-
-        private const string BlobContainerName = "epwhitelist";
 
         public async Task<List<CCGSummaryModel>> List()
         {

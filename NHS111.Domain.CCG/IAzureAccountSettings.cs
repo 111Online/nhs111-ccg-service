@@ -3,6 +3,7 @@
     public interface IAzureAccountSettings
     {
         string ConnectionString { get; set; }
+        bool PreferSecondaryStorageEndpoint { get; set; }
 
         string CCGTableReference { get; set; }
 

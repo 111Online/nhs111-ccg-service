@@ -21,17 +21,18 @@ namespace NHS111.Domain.CCG
         {
             var storageAccount = CloudStorageAccount.Parse(settings.ConnectionString);
             var tableClient = storageAccount.CreateCloudTableClient();
+
+            tableClient.DefaultRequestOptions = new TableRequestOptions()
+            {
+                ServerTimeout = TimeSpan.FromSeconds(3),
+                MaximumExecutionTime = TimeSpan.FromSeconds(3),
+                RetryPolicy = new LinearRetry(TimeSpan.FromMilliseconds(500), 3),
+                LocationMode = settings.PreferSecondaryStorageEndpoint ? LocationMode.SecondaryThenPrimary : LocationMode.PrimaryThenSecondary // when this flag is set to true, the geo-replicated endpoint will be used for reads (only applies to RA-GRS storage accounts)
+            };
             _table = tableClient.GetTableReference(settings.CCGTableReference);
 
             _enablePostcodePartitionKey = settings.EnablePostcodePartitionKey;
         }
-
-        private TableRequestOptions requestOptions = new TableRequestOptions()
-        {
-            ServerTimeout = TimeSpan.FromSeconds(3),
-            MaximumExecutionTime = TimeSpan.FromSeconds(3),
-            RetryPolicy = new LinearRetry(TimeSpan.FromMilliseconds(500), 3)
-        };
 
         public async Task<CCGEntity> Get(string postcode)
         {
@@ -41,7 +42,7 @@ namespace NHS111.Domain.CCG
 
             var retrieveOperation = TableOperation.Retrieve<CCGEntity>(partitionKey, postcode);
 
-            var retrievedResult = await _table.ExecuteAsync(retrieveOperation, requestOptions, null);
+            var retrievedResult = await _table.ExecuteAsync(retrieveOperation);
 
             return (CCGEntity)retrievedResult.Result;
         }
