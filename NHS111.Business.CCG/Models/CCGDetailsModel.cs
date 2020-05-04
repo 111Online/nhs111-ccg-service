@@ -1,6 +1,6 @@
 ﻿namespace NHS111.Business.CCG.Models
 {
-    public class CCGDetailsModel :CCGModel
+    public class CCGDetailsModel : CCGModel
     {
         public string STPName { get; set; }
 

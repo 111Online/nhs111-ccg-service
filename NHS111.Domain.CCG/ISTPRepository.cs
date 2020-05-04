@@ -1,9 +1,8 @@
 ﻿namespace NHS111.Domain.CCG
 {
+    using NHS111.Domain.CCG.Models;
     using System.Collections.Generic;
     using System.Threading.Tasks;
-
-    using NHS111.Domain.CCG.Models;
 
     public interface ISTPRepository
     {

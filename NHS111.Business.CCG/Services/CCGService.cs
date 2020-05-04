@@ -1,23 +1,24 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
-
-using System;
 using System.Threading.Tasks;
 
 namespace NHS111.Business.CCG.Services
 {
-    using System.IO;
-
     using Domain.CCG;
     using Domain.CCG.Models;
-
     using Microsoft.WindowsAzure.Storage;
     using Microsoft.WindowsAzure.Storage.Blob;
-
+    using Microsoft.WindowsAzure.Storage.RetryPolicies;
     using Models;
+    using System.IO;
 
     public class CCGService : ICCGService
     {
+        private const string WhitelistBlobContainerName = "epwhitelist";
+
+        private CloudBlobContainer _container;
+
         public CCGService(ICCGRepository ccgRepository, ISTPRepository stpRepository, IAzureAccountSettings azureAccountSettings)
         {
             _ccgRepository = ccgRepository;
@@ -118,7 +119,7 @@ namespace NHS111.Business.CCG.Services
             postcode = NormalisePostcode(postcode);
 
             var ccgResult = await _ccgRepository.Get(postcode);
-            
+
             if (ccgResult == null)
             {
                 return null;
@@ -130,56 +131,42 @@ namespace NHS111.Business.CCG.Services
             }
 
             var stpResult = await _stpRepository.Get(ccgResult.CCGId);
-            
+
             if (stpResult != null && !string.IsNullOrWhiteSpace(stpResult.PharmacyServiceIdWhitelist))
             {
                 stpResult.PharmacyServiceIdWhitelist = await AppendNationalWhitelistToGPOutOfHours(stpResult.PharmacyServiceIdWhitelist);
             }
-            
+
             return DetailsMap(ccgResult, stpResult);
         }
 
+        private string nationalWhitelist = null;
+
         private async Task<string> AppendNationalWhitelistToGPOutOfHours(string gpOutOfHours)
         {
-            var blob = GetBlob(_azureAccountSettings.NationalWhitelistBlobName + ".csv").Result;
-
-            var allServices = new List<string>();
-
-            using (var ms = new MemoryStream())
+            // Download the whitelist file only once
+            if (nationalWhitelist == null)
             {
-                await blob.DownloadToStreamAsync(ms);
-
-                ms.Position = 0;
-
-                using (var sr = new StreamReader(ms))
-                {
-                    var nationalWhitelist = sr.ReadToEnd();
-
-                    if (!string.IsNullOrWhiteSpace(nationalWhitelist))
-                    {
-                        allServices.AddRange(nationalWhitelist.Split('|'));
-                    }
-                }
+                var blob = await GetBlob(_azureAccountSettings.NationalWhitelistBlobName);
+                nationalWhitelist = await blob.DownloadTextAsync();
             }
-
-            allServices.AddRange(gpOutOfHours.Split('|'));
-
-            return string.Join('|', allServices);
+            return string.Join('|', nationalWhitelist, gpOutOfHours);
         }
 
         private async Task<CloudBlockBlob> GetBlob(string name)
         {
             try
             {
-                var storageAccount = CloudStorageAccount.Parse(_azureAccountSettings.ConnectionString);
+                if (_container == null)
+                {
+                    var storageAccount = CloudStorageAccount.Parse(_azureAccountSettings.ConnectionString);
+                    var client = storageAccount.CreateCloudBlobClient();
+                    // when this flag is set to true, the geo-replicated endpoint will be used for reads (only applies to RA-GRS storage accounts)
+                    client.DefaultRequestOptions.LocationMode = _azureAccountSettings.PreferSecondaryStorageEndpoint ? LocationMode.SecondaryThenPrimary : LocationMode.PrimaryThenSecondary;
 
-                var client = storageAccount.CreateCloudBlobClient();
-
-                var container = client.GetContainerReference(BlobContainerName);
-
-                await container.CreateIfNotExistsAsync();
-
-                var blob = container.GetBlockBlobReference(name);
+                    _container = client.GetContainerReference(WhitelistBlobContainerName);
+                }
+                var blob = _container.GetBlockBlobReference(name);
 
                 return blob;
             }
@@ -190,8 +177,6 @@ namespace NHS111.Business.CCG.Services
                 throw new Exception("", e);
             }
         }
-        
-        private const string BlobContainerName = "epwhitelist";
 
         public async Task<List<CCGSummaryModel>> List()
         {

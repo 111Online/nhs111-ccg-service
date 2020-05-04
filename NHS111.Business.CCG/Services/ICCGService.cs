@@ -1,6 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using NHS111.Business.CCG.Models;
+using System.Collections.Generic;
 using System.Threading.Tasks;
-using NHS111.Business.CCG.Models;
 
 namespace NHS111.Business.CCG.Services
 {

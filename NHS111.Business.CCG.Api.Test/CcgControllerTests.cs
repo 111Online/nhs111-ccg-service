@@ -1,7 +1,7 @@
-﻿using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Moq;
 using NUnit.Framework;
+using System.Threading.Tasks;
 
 
 namespace NHS111.Business.CCG.Api.Test
@@ -38,7 +38,7 @@ namespace NHS111.Business.CCG.Api.Test
         public async Task Get_WhenCCGReturnedFromDataLayer_Returns200OK()
         {
             //Arrange
-            var expectedCCG = new CCGModel { Postcode = "So302un"};
+            var expectedCCG = new CCGModel { Postcode = "So302un" };
             _mockService.Setup(s => s.GetCCGDetails(It.IsAny<string>())).Returns(Task.FromResult(expectedCCG));
             var sut = new CCGController(_mockService.Object);
 

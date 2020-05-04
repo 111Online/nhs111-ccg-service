@@ -1,5 +1,5 @@
-﻿using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
+using System.Threading.Tasks;
 
 namespace NHS111.Business.CCG.Api.Controllers
 {
@@ -54,7 +54,7 @@ namespace NHS111.Business.CCG.Api.Controllers
             }
 
             var result = await _service.GetDetails(postcode);
-            
+
             if (result == null)
             {
                 return NotFound();

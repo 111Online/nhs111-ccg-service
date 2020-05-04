@@ -199,3 +199,4 @@ FakesAssemblies/
 
 #logfiles
 log.*.txt
+/NHS111.Business.CCG.Api/appsettings.development.json

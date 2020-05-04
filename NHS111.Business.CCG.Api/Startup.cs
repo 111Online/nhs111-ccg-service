@@ -20,8 +20,9 @@
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            services.AddApplicationInsightsTelemetry();
             services.AddMvc();
-            services.AddSingleton<IAzureAccountSettings, AzureAccountSettings>(p => new AzureAccountSettings(Configuration["connection"], Configuration["ccgtable"], Configuration["stptable"], Configuration["nationalwhitelistblobname"]));
+            services.AddSingleton<IAzureAccountSettings, AzureAccountSettings>(p => new AzureAccountSettings(Configuration["StorageConnectionString"], Configuration["ccgtable"], Configuration["stptable"], Configuration["nationalwhitelistblobname"], Configuration["enablepostcodepartitionkey"], Configuration["PreferSecondaryStorageEndpoint"]));
             services.AddSingleton<IMonitorService>(new MonitorService());
             services.AddSingleton<ICCGRepository, CCGRepository>();
             services.AddSingleton<ISTPRepository, STPRepository>();

@@ -1,5 +1,13 @@
 ﻿namespace NHS111.DataImport.CCG
 {
+    using CsvHelper;
+    using Microsoft.WindowsAzure.Storage;
+    using Microsoft.WindowsAzure.Storage.Auth;
+    using Microsoft.WindowsAzure.Storage.Blob;
+    using Microsoft.WindowsAzure.Storage.RetryPolicies;
+    using Microsoft.WindowsAzure.Storage.Table;
+    using NHS111.Domain.CCG.Models;
+    using OfficeOpenXml;
     using System;
     using System.Collections.Generic;
     using System.Diagnostics;
@@ -8,17 +16,6 @@
     using System.Text.RegularExpressions;
     using System.Threading.Tasks;
 
-    using CsvHelper;
-
-    using Microsoft.WindowsAzure.Storage;
-    using Microsoft.WindowsAzure.Storage.Auth;
-    using Microsoft.WindowsAzure.Storage.Blob;
-    using Microsoft.WindowsAzure.Storage.Table;
-
-    using NHS111.Domain.CCG.Models;
-
-    using OfficeOpenXml;
-
     public class DataImport
     {
         public DataImport()
@@ -26,58 +23,67 @@
             _arguments = new Dictionary<string, string>();
 
             _ccgLookup = new Dictionary<string, PostcodeRecord>();
-            
+
             _dosSearchDistanceLookup = new Dictionary<string, int>();
 
             _dosSearchDistancePartialLookup = new Dictionary<string, int>();
         }
 
-        public void PerformImport(string[] args)
+        public async Task PerformImportAsync(string[] args)
         {
             try
             {
                 LoadSettings(args);
-                
-                Task.Run(UploadNationalWhitelist).GetAwaiter().GetResult();
 
-                Task.Run(LoadCCGLookupData).GetAwaiter().GetResult();
-                
+                Console.WriteLine($"Beginning Data import to storage account {GetSetting("AccountName")}");
+
+                Console.WriteLine("Uploading National Whitelist");
+                await UploadNationalWhitelist();
+                Console.WriteLine("Finished uploading National Whitelist");
+
+                Console.WriteLine("Beginning CCG Lookup Data loading");
+                var clock = new Stopwatch();
+                clock.Start();
+
+                await LoadCCGLookupData();
+
+                clock.Stop();
+                Console.WriteLine("Finished importing CCG Lookup Data in " + clock.Elapsed.ToString(@"hh\:mm\:ss"));
+
                 LoadDOSSearchDistanceLookupData();
-                
+
                 if (string.IsNullOrWhiteSpace(GetSetting("STPDataOnly")))
                 {
-                    RunImport();
+                    Console.WriteLine("Beginning CCG loading");
+                    clock.Restart();
+                    await RunImportAsync();
+                    clock.Stop();
+                    Console.WriteLine("Finished importing CCG in " + clock.Elapsed.ToString(@"hh\:mm\:ss"));
                 }
             }
             catch (Exception e)
             {
                 // TODO: Add application logging
-
+                Console.WriteLine($"Exception in {nameof(PerformImportAsync)}: {e.Message}");
                 throw new Exception("", e);
             }
         }
-        
+
         private async Task UploadNationalWhitelist()
         {
             try
             {
                 var filePath = GetSetting("whitelistFilePath");
-                
-                var content = File.ReadAllText(filePath);
-                
-                var blobName = filePath.Substring(filePath.LastIndexOf(@"\", StringComparison.Ordinal) +1);
-                
-                using (var fs = new FileStream(filePath, FileMode.Open))
-                {
-                    var blob = GetBlob(blobName).Result;
+                var blobName = Path.GetFileName(filePath);
+                Console.WriteLine($"Using National Whitelist file name={blobName}");
 
-                    await blob.UploadFromStreamAsync(fs);
-                }
+                var blob = await GetBlob(blobName);
+                await blob.UploadFromFileAsync(filePath);
             }
             catch (Exception e)
             {
                 // TODO: Add application logging
-
+                Console.WriteLine($"Exception in {nameof(UploadNationalWhitelist)}: {e.Message}");
                 throw new Exception("", e);
             }
         }
@@ -86,9 +92,9 @@
         {
             try
             {
-                var tableReference = GetSetting("ccgTableRef");
+                var tableReference = GetSetting("stpTableRef");
 
-                var stpTable = GetTable(tableReference);
+                var stpTable = await GetTable(tableReference);
 
                 var filePath = GetSetting("ccgCsvFilePath");
 
@@ -103,11 +109,10 @@
 
                         while (reader.Read())
                         {
-                            batch.Add(
-                                TableOperation.InsertOrReplace(
+                            batch.Add(TableOperation.InsertOrReplace(
                                     new STPEntity
                                     {
-                                        PartitionKey = "CCGs",
+                                        PartitionKey = "true".Equals(GetSetting("EnablePostcodePartitionKey")) ? "CCG" : "CCGs",
                                         RowKey = reader.GetField<string>("CCG16CD"),
                                         CCGId = reader.GetField<string>("CCG16CD"),
                                         STPId = reader.GetField<string>("STP17CD"),
@@ -135,7 +140,6 @@
                             if (batch.Count % 100 == 0)
                             {
                                 await stpTable.ExecuteBatchAsync(batch);
-
                                 batch = new TableBatchOperation();
                             }
                         }
@@ -150,7 +154,7 @@
             catch (Exception e)
             {
                 // TODO: Add application logging
-
+                Console.WriteLine($"Exception in {nameof(LoadCCGLookupData)}: {e.Message}");
                 throw new Exception("", e);
             }
         }
@@ -159,10 +163,11 @@
         {
             try
             {
-                var filePath = GetSetting("DosSaerchDistanceFilePath");
+                var filePath = GetSetting("DosSearchDistanceFilePath");
 
                 var package = new ExcelPackage(new FileInfo(filePath));
-                
+                Console.WriteLine($"Loading DOS search distance Data from file {filePath}");
+
                 var fullPostcodeSheet = package.Workbook.Worksheets[2];
 
                 for (var i = 1; i <= fullPostcodeSheet.Dimension.End.Row; i++)
@@ -176,23 +181,25 @@
                 {
                     _dosSearchDistancePartialLookup.Add(RemoveWhitespace(partialPostcodeSheet.Cells[i, 1].Value.ToString()), Convert.ToInt32(partialPostcodeSheet.Cells[i, 2].Value));
                 }
+
+                Console.WriteLine("Finished loading DOS search distance Data");
             }
             catch (Exception e)
             {
                 // TODO: Add application logging
-
+                Console.WriteLine($"Exception in {nameof(LoadDOSSearchDistanceLookupData)}: {e.Message}");
                 throw new Exception("", e);
             }
         }
 
-        public async void RunImport()
+        public async Task RunImportAsync()
         {
             try
             {
                 const int BatchSizeMax = 100;
 
-                var tableReference = GetSetting("TableRef");
-                var table = GetTable(tableReference);
+                var tableReference = GetSetting("ccgTableRef");
+                var ccgTable = await GetTable(tableReference);
 
                 var filePath = GetSetting("CSVFilePath");
                 _recordCount = File.ReadLines(filePath).Count() - 1;
@@ -209,8 +216,10 @@
                     {
                         reader.Read();
                         reader.ReadHeader();
-                        
+
                         var elementCount = 0;
+
+                        string lastPartitionKey = "";
 
                         while (reader.Read())
                         {
@@ -242,25 +251,32 @@
                                     noDosSearchDistanceCount++;
                                 }
 
+                                var partitionKey = "Postcodes";
+                                if ("true".Equals(GetSetting("EnablePostcodePartitionKey")))
+                                    partitionKey = postcode?.Length > 1 ? postcode.Substring(0, 2).Trim() : "emptypostcode";
+
+                                // In each batch we can only have one partition key. Hence, when we go to the next key, we need so send and empty the batch first
+                                if (elementCount > 0 && (partitionKey != lastPartitionKey || elementCount % BatchSizeMax == 0))
+                                {
+                                    var task = ImportBatch(ccgTable, batch);
+                                    tasks.Add(task);
+                                    batch = new TableBatchOperation();
+                                }
+
+                                lastPartitionKey = partitionKey;
+
                                 batch.Add(TableOperation.InsertOrReplace(new CCGEntity
                                 {
                                     CCG = _ccgLookup.ContainsKey(ccgId) ? _ccgLookup[ccgId].CcgName : "",
                                     CCGId = ccgId,
                                     Postcode = postcode,
                                     App = _ccgLookup.ContainsKey(ccgId) ? _ccgLookup[ccgId].AppName : "",
-                                    PartitionKey = "Postcodes",
+                                    PartitionKey = partitionKey, //"Postcodes",
                                     RowKey = RemoveWhitespace(postcode),
                                     DOSSearchDistance = dosSearchDistance
                                 }));
 
                                 elementCount++;
-
-                                if (elementCount % BatchSizeMax == 0)
-                                {
-                                    var task = ImportBatch(table, batch);
-                                    tasks.Add(task);
-                                    batch = new TableBatchOperation();
-                                }
 
                                 if (tasks.Count == 25)
                                 {
@@ -275,14 +291,15 @@
                         }
                     }
                 }
-                
-                tasks.Add(ImportBatch(table, batch));
+
+                tasks.Add(ImportBatch(ccgTable, batch));
                 await Task.WhenAll(tasks);
+                Console.WriteLine("DOS Search distance not mapped count: " + noDosSearchDistanceCount);
             }
             catch (Exception e)
             {
                 // TODO: Add application logging
-
+                Console.WriteLine($"Exception in {nameof(RunImportAsync)}: {e.Message}");
                 throw new Exception("", e);
             }
         }
@@ -291,16 +308,29 @@
         {
             try
             {
-                var importedCount = await table.ExecuteBatchAsync(batch);
+                var requestOptions = new TableRequestOptions();
+                requestOptions.RetryPolicy = new LinearRetry(TimeSpan.FromMilliseconds(500), 3);
+                requestOptions.MaximumExecutionTime = TimeSpan.FromMinutes(1);
+                requestOptions.ServerTimeout = TimeSpan.FromMinutes(1);
 
-                var newCount = _counter + importedCount.Count;
+                var context = new OperationContext();
+                context.ClientRequestID = "ccg-data-importer";
+                context.Retrying += (sender, args) =>
+                {
+                    Console.WriteLine($"WARN: Retrying batchimport. Error code={args?.RequestInformation?.ErrorCode}");
+                };
+
+                var importedResult = await table.ExecuteBatchAsync(batch, requestOptions, context);
+
+                var newCount = _counter + importedResult.Count;
 
                 _counter = newCount;
+                Console.WriteLine("Imported " + _counter + " records (" + _terminatedPostcodesCount + " terminated) of " + _recordCount + " (" + CalculatePercentDone() + "%)");
             }
             catch (Exception e)
             {
                 // TODO: Add application logging
-
+                Console.WriteLine($"Exception in {nameof(ImportBatch)}: {e.Message}");
                 throw new Exception("", e);
             }
         }
@@ -316,14 +346,14 @@
                         .Replace("-", string.Empty);
 
                     var value = t.Substring(t.IndexOf('=') + 1);
-                    
+
                     _arguments.Add(key, value);
                 }
             }
             catch (Exception e)
             {
                 // TODO: Add application logging
-
+                Console.WriteLine($"Exception in {nameof(LoadSettings)}: {e.Message}");
                 throw new Exception("", e);
             }
         }
@@ -377,8 +407,8 @@
                 throw new Exception("", e);
             }
         }
-        
-        private CloudTable GetTable(string name)
+
+        private async Task<CloudTable> GetTable(string name)
         {
             try
             {
@@ -386,7 +416,9 @@
 
                 var tableClient = storageAccount.CreateCloudTableClient();
 
-                return tableClient.GetTableReference(name);
+                var tableRef = tableClient.GetTableReference(name);
+                await tableRef.CreateIfNotExistsAsync();
+                return tableRef;
             }
             catch (Exception e)
             {
@@ -405,11 +437,11 @@
                 var client = storageAccount.CreateCloudBlobClient();
 
                 var container = client.GetContainerReference(BlobContainerName);
-                
+
                 await container.CreateIfNotExistsAsync();
 
                 var blob = container.GetBlockBlobReference(name);
-                
+
                 return blob;
             }
             catch (Exception e)
@@ -444,11 +476,11 @@
                 throw new Exception("", e);
             }
         }
-        
+
         private const string WhitespacePattern = @"\s+";
 
         private const string BlobContainerName = "epwhitelist";
-        
+
         private int _recordCount;
 
         private int _counter;
@@ -458,7 +490,7 @@
         private Dictionary<string, string> _arguments;
 
         private static Dictionary<string, PostcodeRecord> _ccgLookup;
-        
+
         private CloudStorageAccount _storageAccount;
 
         private Dictionary<string, int> _dosSearchDistanceLookup;

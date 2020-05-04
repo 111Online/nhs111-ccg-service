@@ -1,10 +1,9 @@
 ﻿namespace NHS111.DataImport.CCG
 {
-    using System;
-
     using CsvHelper;
     using CsvHelper.Configuration;
     using CsvHelper.TypeConversion;
+    using System;
 
     public class DateTimeLocalConverter : DateTimeConverter
     {
