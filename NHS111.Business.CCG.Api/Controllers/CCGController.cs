@@ -8,6 +8,8 @@ namespace NHS111.Business.CCG.Api.Controllers
     [Route("api/[controller]")]
     public class CCGController : Controller
     {
+        private readonly ICCGService _service;
+
         public CCGController(ICCGService service)
         {
             _service = service;
@@ -67,7 +69,5 @@ namespace NHS111.Business.CCG.Api.Controllers
         {
             return !PostCodeFormatValidator.IsAValidPostcode(postcode) || string.IsNullOrEmpty(postcode);
         }
-
-        private readonly ICCGService _service;
     }
 }
