@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using NHS111.Business.CCG.Api.Services;
+using System.Threading.Tasks;
 
 namespace NHS111.Business.CCG.Api.Controllers
 {
@@ -16,7 +17,7 @@ namespace NHS111.Business.CCG.Api.Controllers
 
         [HttpGet]
         [Route("api/Monitor/{service}")]
-        public string MonitorPing(string service)
+        public async Task<string> MonitorPing(string service)
         {
             switch (service.ToLower())
             {
@@ -27,7 +28,7 @@ namespace NHS111.Business.CCG.Api.Controllers
                     return _monitor.Metrics();
 
                 case "health":
-                    return _monitor.Health().ToString();
+                    return (await _monitor.Health()).ToString();
 
                 case "version":
                     return _monitor.Version();

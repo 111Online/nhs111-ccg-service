@@ -5,6 +5,7 @@
     using Moq;
     using NHS111.Business.CCG.Api.Controllers;
     using NUnit.Framework;
+    using System.Threading.Tasks;
 
     [TestFixture]
     class MonitorControllerTests
@@ -27,7 +28,7 @@
             var response = sut.MonitorPing("");
             //Assert
 
-            Assert.AreEqual(null, response);
+            Assert.AreEqual(null, response.Result);
         }
 
         [Test(Description = "When calling MonitorPing() with ping it should return pong")]
@@ -39,7 +40,7 @@
             //Act
             var response = sut.MonitorPing("ping".ToString());
             //Assert
-            Assert.AreEqual("pong", response);
+            Assert.AreEqual("pong", response.Result);
         }
 
         [Test(Description = "When calling MonitorPing() with metrics it should return Metrics")]
@@ -51,7 +52,7 @@
             //Act
             var response = sut.MonitorPing("metrics".ToString());
             //Assert
-            Assert.AreEqual("Metrics", response);
+            Assert.AreEqual("Metrics", response.Result);
         }
 
         [Test(Description = "When calling MonitorPing() with health it should return True")]
@@ -59,11 +60,11 @@
         {
             //Arrange
             var sut = new MonitorController(_mockService.Object);
-            _mockService.Setup(s => s.Health()).Returns(true);
+            _mockService.Setup(s => s.Health()).Returns(Task.FromResult(true));
             //Act
             var response = sut.MonitorPing("health".ToString());
             //Assert
-            Assert.AreEqual("True", response);
+            Assert.AreEqual("True", response.Result);
         }
     }
 }
