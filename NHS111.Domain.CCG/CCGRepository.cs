@@ -2,6 +2,8 @@
 using Microsoft.WindowsAzure.Storage.RetryPolicies;
 using Microsoft.WindowsAzure.Storage.Table;
 using NHS111.Domain.CCG.Models;
+using Polly;
+using Polly.Retry;
 using System;
 using System.Threading.Tasks;
 
@@ -16,6 +18,8 @@ namespace NHS111.Domain.CCG
     {
         private readonly CloudTable _table;
         private readonly bool _enablePostcodePartitionKey;
+
+        private readonly AsyncRetryPolicy retryIfException = Policy.Handle<Exception>().RetryAsync(2);
 
         public CCGRepository(IAzureAccountSettings settings)
         {
@@ -42,7 +46,9 @@ namespace NHS111.Domain.CCG
 
             var retrieveOperation = TableOperation.Retrieve<CCGEntity>(partitionKey, postcode);
 
-            var retrievedResult = await _table.ExecuteAsync(retrieveOperation);
+            // Use Polly to retry to catch transient Storage errors
+            var res = await retryIfException.ExecuteAndCaptureAsync(() => _table.ExecuteAsync(retrieveOperation));
+            var retrievedResult = res.Result;
 
             return (CCGEntity)retrievedResult.Result;
         }

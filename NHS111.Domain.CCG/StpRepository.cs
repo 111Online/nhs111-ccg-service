@@ -2,6 +2,8 @@
 using Microsoft.WindowsAzure.Storage.RetryPolicies;
 using Microsoft.WindowsAzure.Storage.Table;
 using NHS111.Domain.CCG.Models;
+using Polly;
+using Polly.Retry;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -14,6 +16,7 @@ namespace NHS111.Domain.CCG
         private readonly CloudTable _table;
         private List<STPEntity> allEntities = null;
 
+        private readonly AsyncRetryPolicy retryIfException = Policy.Handle<Exception>().RetryAsync(2);
 
         public STPRepository(IAzureAccountSettings settings)
         {
@@ -36,7 +39,9 @@ namespace NHS111.Domain.CCG
             var entities = new List<STPEntity>();
             do
             {
-                var queryResult = await _table.ExecuteQuerySegmentedAsync(new TableQuery<STPEntity>(), token);
+                // Use Polly to retry to catch transient Storage errors
+                var res = await retryIfException.ExecuteAndCaptureAsync(() => _table.ExecuteQuerySegmentedAsync(new TableQuery<STPEntity>(), token));
+                var queryResult = res.Result;
                 entities.AddRange(queryResult.Results);
                 token = queryResult.ContinuationToken;
             } while (token != null);
