@@ -16,7 +16,9 @@ namespace NHS111.Domain.CCG
         private readonly CloudTable _table;
         private List<STPEntity> allEntities = null;
 
-        private readonly AsyncRetryPolicy retryIfException = Policy.Handle<Exception>().RetryAsync(2);
+        private readonly AsyncRetryPolicy retryIfException = Policy
+            .Handle<Exception>()
+            .WaitAndRetryAsync(2, retryAttempt => TimeSpan.FromMilliseconds(retryAttempt * 200));
 
         public STPRepository(IAzureAccountSettings settings)
         {
