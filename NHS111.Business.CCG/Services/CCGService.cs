@@ -147,13 +147,13 @@ namespace NHS111.Business.CCG.Services
             // Download the whitelist file only once
             if (nationalWhitelist == null)
             {
-                var blob = await GetBlob(_azureAccountSettings.NationalWhitelistBlobName);
+                var blob = GetBlobReference(_azureAccountSettings.NationalWhitelistBlobName);
                 nationalWhitelist = await blob.DownloadTextAsync();
             }
             return string.Join('|', nationalWhitelist, gpOutOfHours);
         }
 
-        private async Task<CloudBlockBlob> GetBlob(string name)
+        private CloudBlockBlob GetBlobReference(string name)
         {
             try
             {
