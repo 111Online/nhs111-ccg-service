@@ -32,7 +32,7 @@ namespace NHS111.Domain.CCG
                 RetryPolicy = new LinearRetry(TimeSpan.FromMilliseconds(500), 3),
                 LocationMode = settings.PreferSecondaryStorageEndpoint ? LocationMode.SecondaryThenPrimary : LocationMode.PrimaryThenSecondary // when this flag is set to true, the geo-replicated endpoint will be used for reads (only applies to RA-GRS storage accounts)
             };
-            _partitionKey = "true".Equals(settings.EnablePostcodePartitionKey) ? "CCG" : "CCGs";
+            _partitionKey = settings.EnablePostcodePartitionKey ? "CCG" : "CCGs";
             _table = tableClient.GetTableReference(settings.STPTableReference);
         }
 
