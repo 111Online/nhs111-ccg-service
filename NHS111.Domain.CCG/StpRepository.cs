@@ -14,6 +14,7 @@ namespace NHS111.Domain.CCG
     public class STPRepository : ISTPRepository
     {
         private readonly CloudTable _table;
+        private readonly string _partitionKey;
         private List<STPEntity> allEntities = null;
 
         private readonly AsyncRetryPolicy retryIfException = Policy
@@ -31,6 +32,7 @@ namespace NHS111.Domain.CCG
                 RetryPolicy = new LinearRetry(TimeSpan.FromMilliseconds(500), 3),
                 LocationMode = settings.PreferSecondaryStorageEndpoint ? LocationMode.SecondaryThenPrimary : LocationMode.PrimaryThenSecondary // when this flag is set to true, the geo-replicated endpoint will be used for reads (only applies to RA-GRS storage accounts)
             };
+            _partitionKey = "true".Equals(settings.EnablePostcodePartitionKey) ? "CCG" : "CCGs";
             _table = tableClient.GetTableReference(settings.STPTableReference);
         }
 
@@ -42,7 +44,9 @@ namespace NHS111.Domain.CCG
             do
             {
                 // Use Polly to retry to catch transient Storage errors
-                var res = await retryIfException.ExecuteAndCaptureAsync(() => _table.ExecuteQuerySegmentedAsync(new TableQuery<STPEntity>(), token));
+                TableQuery<STPEntity> partitionQuery = new TableQuery<STPEntity>().Where(
+                    TableQuery.GenerateFilterCondition("PartitionKey", QueryComparisons.Equal, _partitionKey));
+                var res = await retryIfException.ExecuteAndCaptureAsync(() => _table.ExecuteQuerySegmentedAsync(partitionQuery, token));
                 var queryResult = res.Result;
                 entities.AddRange(queryResult.Results);
                 token = queryResult.ContinuationToken;
