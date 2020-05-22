@@ -2,7 +2,6 @@
 using Microsoft.WindowsAzure.Storage.RetryPolicies;
 using Microsoft.WindowsAzure.Storage.Table;
 using NHS111.Domain.CCG.Models;
-using Polly;
 using Polly.Retry;
 using System;
 using System.Threading.Tasks;
@@ -19,9 +18,7 @@ namespace NHS111.Domain.CCG
         private readonly CloudTable _table;
         private readonly bool _enablePostcodePartitionKey;
 
-        private readonly AsyncRetryPolicy retryIfException = Policy
-            .Handle<Exception>()
-            .WaitAndRetryAsync(2, retryAttempt => TimeSpan.FromMilliseconds(retryAttempt * 200));
+        private readonly AsyncRetryPolicy retryIfException = PolicyFactory.IfException();
 
         public CCGRepository(IAzureAccountSettings settings)
         {

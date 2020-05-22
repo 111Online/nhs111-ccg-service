@@ -2,7 +2,6 @@
 using Microsoft.WindowsAzure.Storage.RetryPolicies;
 using Microsoft.WindowsAzure.Storage.Table;
 using NHS111.Domain.CCG.Models;
-using Polly;
 using Polly.Retry;
 using System;
 using System.Collections.Generic;
@@ -17,9 +16,7 @@ namespace NHS111.Domain.CCG
         private readonly string _partitionKey;
         private List<STPEntity> allEntities = null;
 
-        private readonly AsyncRetryPolicy retryIfException = Policy
-            .Handle<Exception>()
-            .WaitAndRetryAsync(2, retryAttempt => TimeSpan.FromMilliseconds(retryAttempt * 200));
+        private readonly AsyncRetryPolicy retryIfException = PolicyFactory.IfException();
 
         public STPRepository(IAzureAccountSettings settings)
         {
