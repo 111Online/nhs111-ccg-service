@@ -23,10 +23,10 @@
             services.AddApplicationInsightsTelemetry();
             services.AddMvc();
             services.AddSingleton<IAzureAccountSettings, AzureAccountSettings>(p => new AzureAccountSettings(Configuration["StorageConnectionString"], Configuration["ccgtable"], Configuration["stptable"], Configuration["nationalwhitelistblobname"], Configuration["enablepostcodepartitionkey"], Configuration["PreferSecondaryStorageEndpoint"]));
-            services.AddSingleton<IMonitorService>(new MonitorService());
             services.AddSingleton<ICCGRepository, CCGRepository>();
             services.AddSingleton<ISTPRepository, STPRepository>();
-            services.AddSingleton<ICCGService, CCGService>();
+            services.AddSingleton<ICCGService, CCGService>(); 
+            services.AddSingleton<IMonitorService, MonitorService>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

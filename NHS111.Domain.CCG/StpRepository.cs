@@ -2,6 +2,7 @@
 using Microsoft.WindowsAzure.Storage.RetryPolicies;
 using Microsoft.WindowsAzure.Storage.Table;
 using NHS111.Domain.CCG.Models;
+using Polly.Retry;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -12,8 +13,10 @@ namespace NHS111.Domain.CCG
     public class STPRepository : ISTPRepository
     {
         private readonly CloudTable _table;
+        private readonly string _partitionKey;
         private List<STPEntity> allEntities = null;
 
+        private readonly AsyncRetryPolicy retryIfException = PolicyFactory.IfException();
 
         public STPRepository(IAzureAccountSettings settings)
         {
@@ -26,6 +29,7 @@ namespace NHS111.Domain.CCG
                 RetryPolicy = new LinearRetry(TimeSpan.FromMilliseconds(500), 3),
                 LocationMode = settings.PreferSecondaryStorageEndpoint ? LocationMode.SecondaryThenPrimary : LocationMode.PrimaryThenSecondary // when this flag is set to true, the geo-replicated endpoint will be used for reads (only applies to RA-GRS storage accounts)
             };
+            _partitionKey = settings.EnablePostcodePartitionKey ? "CCG" : "CCGs";
             _table = tableClient.GetTableReference(settings.STPTableReference);
         }
 
@@ -36,7 +40,11 @@ namespace NHS111.Domain.CCG
             var entities = new List<STPEntity>();
             do
             {
-                var queryResult = await _table.ExecuteQuerySegmentedAsync(new TableQuery<STPEntity>(), token);
+                // Use Polly to retry to catch transient Storage errors
+                TableQuery<STPEntity> partitionQuery = new TableQuery<STPEntity>().Where(
+                    TableQuery.GenerateFilterCondition("PartitionKey", QueryComparisons.Equal, _partitionKey));
+                var res = await retryIfException.ExecuteAndCaptureAsync(() => _table.ExecuteQuerySegmentedAsync(partitionQuery, token));
+                var queryResult = res.Result;
                 entities.AddRange(queryResult.Results);
                 token = queryResult.ContinuationToken;
             } while (token != null);
