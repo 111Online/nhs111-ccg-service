@@ -16,7 +16,6 @@ namespace NHS111.Domain.CCG
     public class CCGRepository : ICCGRepository
     {
         private readonly CloudTable _table;
-        private readonly bool _enablePostcodePartitionKey;
 
         private readonly AsyncRetryPolicy retryIfException = PolicyFactory.IfException();
 
@@ -28,20 +27,15 @@ namespace NHS111.Domain.CCG
             tableClient.DefaultRequestOptions = new TableRequestOptions()
             {
                 ServerTimeout = TimeSpan.FromSeconds(3),
-                MaximumExecutionTime = TimeSpan.FromSeconds(3),
                 RetryPolicy = new LinearRetry(TimeSpan.FromMilliseconds(500), 3),
                 LocationMode = settings.PreferSecondaryStorageEndpoint ? LocationMode.SecondaryThenPrimary : LocationMode.PrimaryThenSecondary // when this flag is set to true, the geo-replicated endpoint will be used for reads (only applies to RA-GRS storage accounts)
             };
             _table = tableClient.GetTableReference(settings.CCGTableReference);
-
-            _enablePostcodePartitionKey = settings.EnablePostcodePartitionKey;
         }
 
         public async Task<CCGEntity> Get(string postcode)
         {
-            var partitionKey = "Postcodes";
-            if (_enablePostcodePartitionKey)
-                partitionKey = postcode?.Length > 1 ? postcode.Substring(0, 2).Trim() : "emptypostcode";
+            var partitionKey = postcode?.Length > 1 ? postcode.Substring(0, 2).Trim() : "emptypostcode";
 
             var retrieveOperation = TableOperation.Retrieve<CCGEntity>(partitionKey, postcode);
 

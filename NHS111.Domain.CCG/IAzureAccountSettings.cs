@@ -10,7 +10,5 @@
         string STPTableReference { get; set; }
 
         string NationalWhitelistBlobName { get; set; }
-
-        bool EnablePostcodePartitionKey { get; set; }
     }
 }

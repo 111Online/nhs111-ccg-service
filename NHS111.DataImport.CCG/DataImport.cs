@@ -112,7 +112,7 @@
                             batch.Add(TableOperation.InsertOrReplace(
                                     new STPEntity
                                     {
-                                        PartitionKey = "true".Equals(GetSetting("EnablePostcodePartitionKey")) ? "CCG" : "CCGs",
+                                        PartitionKey = "CCG",
                                         RowKey = reader.GetField<string>("CCG16CD"),
                                         CCGId = reader.GetField<string>("CCG16CD"),
                                         STPId = reader.GetField<string>("STP17CD"),
@@ -251,9 +251,7 @@
                                     noDosSearchDistanceCount++;
                                 }
 
-                                var partitionKey = "Postcodes";
-                                if ("true".Equals(GetSetting("EnablePostcodePartitionKey")))
-                                    partitionKey = postcode?.Length > 1 ? postcode.Substring(0, 2).Trim() : "emptypostcode";
+                                var partitionKey = postcode?.Length > 1 ? postcode.Substring(0, 2).Trim() : "emptypostcode";
 
                                 // In each batch we can only have one partition key. Hence, when we go to the next key, we need so send and empty the batch first
                                 if (elementCount > 0 && (partitionKey != lastPartitionKey || elementCount % BatchSizeMax == 0))
@@ -310,7 +308,6 @@
             {
                 var requestOptions = new TableRequestOptions();
                 requestOptions.RetryPolicy = new LinearRetry(TimeSpan.FromMilliseconds(500), 10);
-                requestOptions.MaximumExecutionTime = TimeSpan.FromMinutes(1);
                 requestOptions.ServerTimeout = TimeSpan.FromMinutes(1);
 
                 var context = new OperationContext();
