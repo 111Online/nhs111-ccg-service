@@ -310,7 +310,6 @@
             {
                 var requestOptions = new TableRequestOptions();
                 requestOptions.RetryPolicy = new LinearRetry(TimeSpan.FromMilliseconds(500), 10);
-                requestOptions.MaximumExecutionTime = TimeSpan.FromMinutes(1);
                 requestOptions.ServerTimeout = TimeSpan.FromMinutes(1);
 
                 var context = new OperationContext();
