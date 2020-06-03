@@ -13,7 +13,7 @@ namespace NHS111.Domain.CCG
     public class STPRepository : ISTPRepository
     {
         private readonly CloudTable _table;
-        private readonly string _partitionKey;
+        private const string _partitionKey = "CCG";
         private List<STPEntity> allEntities = null;
 
         private readonly AsyncRetryPolicy retryIfException = PolicyFactory.IfException();
@@ -28,7 +28,6 @@ namespace NHS111.Domain.CCG
                 RetryPolicy = new LinearRetry(TimeSpan.FromMilliseconds(500), 3),
                 LocationMode = settings.PreferSecondaryStorageEndpoint ? LocationMode.SecondaryThenPrimary : LocationMode.PrimaryThenSecondary // when this flag is set to true, the geo-replicated endpoint will be used for reads (only applies to RA-GRS storage accounts)
             };
-            _partitionKey = settings.EnablePostcodePartitionKey ? "CCG" : "CCGs";
             _table = tableClient.GetTableReference(settings.STPTableReference);
         }
 
