@@ -26,9 +26,10 @@ namespace NHS111.Domain.CCG
 
             tableClient.DefaultRequestOptions = new TableRequestOptions()
             {
-                ServerTimeout = TimeSpan.FromSeconds(3),
+                ServerTimeout = TimeSpan.FromMilliseconds(200),
+                MaximumExecutionTime = TimeSpan.FromSeconds(3),
                 RetryPolicy = new LinearRetry(TimeSpan.FromMilliseconds(500), 3),
-                LocationMode = settings.PreferSecondaryStorageEndpoint ? LocationMode.SecondaryThenPrimary : LocationMode.PrimaryThenSecondary // when this flag is set to true, the geo-replicated endpoint will be used for reads (only applies to RA-GRS storage accounts)
+                LocationMode = settings.LocationMode
             };
             _table = tableClient.GetTableReference(settings.CCGTableReference);
         }

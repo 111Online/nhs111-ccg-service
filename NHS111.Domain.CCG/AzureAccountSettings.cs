@@ -1,17 +1,20 @@
-﻿namespace NHS111.Domain.CCG
+﻿using Microsoft.WindowsAzure.Storage.RetryPolicies;
+using System;
+
+namespace NHS111.Domain.CCG
 {
     public class AzureAccountSettings : IAzureAccountSettings
     {
-        public AzureAccountSettings(string connectionString, string ccgTableReference, string stpTableReference, string nationalWhitelistBlobName, string preferSecondaryStorageEndpoint = "false")
+        public AzureAccountSettings(string connectionString, string ccgTableReference, string stpTableReference, string nationalWhitelistBlobName, string locationMode = "PrimaryThenSecondary")
         {
             ConnectionString = connectionString;
-            PreferSecondaryStorageEndpoint = bool.TryParse(preferSecondaryStorageEndpoint, out var _preferSecondaryStorageEndpoint) ? _preferSecondaryStorageEndpoint : false;
+            LocationMode = Enum.TryParse(locationMode, out LocationMode _locationMode) ? _locationMode : LocationMode.PrimaryThenSecondary;
             CCGTableReference = ccgTableReference;
             STPTableReference = stpTableReference;
             NationalWhitelistBlobName = nationalWhitelistBlobName;
         }
         public string ConnectionString { get; set; }
-        public bool PreferSecondaryStorageEndpoint { get; set; }
+        public LocationMode LocationMode { get; set; }
 
         public string CCGTableReference { get; set; }
 
