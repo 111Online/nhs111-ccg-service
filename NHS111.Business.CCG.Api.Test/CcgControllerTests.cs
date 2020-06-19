@@ -27,10 +27,12 @@ namespace NHS111.Business.CCG.Api.Test
 
             //Act
             var response = await sut.Get(null);
-
             //Assert
             Assert.IsInstanceOf<BadRequestResult>(response, TestContext.CurrentContext.Test.Expectation());
+
+            //Act
             response = await sut.Get("");
+            //Assert
             Assert.IsInstanceOf<BadRequestResult>(response, TestContext.CurrentContext.Test.Expectation());
         }
 

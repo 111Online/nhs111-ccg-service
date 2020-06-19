@@ -161,8 +161,7 @@ namespace NHS111.Business.CCG.Services
                 {
                     var storageAccount = CloudStorageAccount.Parse(_azureAccountSettings.ConnectionString);
                     var client = storageAccount.CreateCloudBlobClient();
-                    // when this flag is set to true, the geo-replicated endpoint will be used for reads (only applies to RA-GRS storage accounts)
-                    client.DefaultRequestOptions.LocationMode = _azureAccountSettings.PreferSecondaryStorageEndpoint ? LocationMode.SecondaryThenPrimary : LocationMode.PrimaryThenSecondary;
+                    client.DefaultRequestOptions.LocationMode = _azureAccountSettings.LocationMode;
 
                     _container = client.GetContainerReference(WhitelistBlobContainerName);
                 }

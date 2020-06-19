@@ -1,9 +1,11 @@
-﻿namespace NHS111.Domain.CCG
+﻿using Microsoft.WindowsAzure.Storage.RetryPolicies;
+
+namespace NHS111.Domain.CCG
 {
     public interface IAzureAccountSettings
     {
         string ConnectionString { get; set; }
-        bool PreferSecondaryStorageEndpoint { get; set; }
+        LocationMode LocationMode { get; set; }
 
         string CCGTableReference { get; set; }
 
