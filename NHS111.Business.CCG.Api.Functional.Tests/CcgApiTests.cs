@@ -21,7 +21,7 @@ namespace NHS111.Business.CCG.Api.Functional.Tests
 
             if (string.IsNullOrWhiteSpace(address))
             {
-                address = "";
+                address = "https://111-int360-ukw-ccg-api.azurewebsites.net/";
             }
 
             _httpClient.BaseAddress = new Uri(address);
@@ -31,7 +31,7 @@ namespace NHS111.Business.CCG.Api.Functional.Tests
         public async Task CcgApiGetTests_returns_valid_response()
         {
             //var result = await _restClient.ExecuteTaskAsync(new RestRequest(string.Format(_config["CcgApiGetUrl"], "so302un")));
-            var response = await _httpClient.GetAsync(string.Format("api/ccg/{0}", "so302un"));
+            var response = await _httpClient.GetAsync("api/ccg/so302un");
             var result = await response.Content.ReadAsStringAsync();
 
             Assert.True(response.IsSuccessStatusCode);
@@ -54,7 +54,7 @@ namespace NHS111.Business.CCG.Api.Functional.Tests
         {
             var response = await _httpClient.GetAsync($"api/ccg/{postcode}");
             var result = await response.Content.ReadAsStringAsync();
-
+            Console.Write(result);
             Assert.True(response.IsSuccessStatusCode);
             Assert.IsNotNull(result);
             var data = JsonConvert.DeserializeObject<CCGModel>(result);
@@ -64,7 +64,7 @@ namespace NHS111.Business.CCG.Api.Functional.Tests
         [Test]
         public async Task CcgApiGetDetailsTests_returns_valid_response()
         {
-            var response = await _httpClient.GetAsync($"api/ccg/details/{"so302un"}");
+            var response = await _httpClient.GetAsync("api/ccg/details/so302un");
             var result = await response.Content.ReadAsStringAsync();
 
             Assert.IsNotNull(result);
