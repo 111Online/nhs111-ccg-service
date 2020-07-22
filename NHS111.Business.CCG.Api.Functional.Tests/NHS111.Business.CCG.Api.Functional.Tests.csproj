@@ -2,8 +2,10 @@
 
   <PropertyGroup>
     <TargetFramework>netcoreapp2.0</TargetFramework>
-
+    <AssemblyVersion>1.0.0.*</AssemblyVersion>
+    <FileVersion>1.0.0.*</FileVersion>
     <IsPackable>false</IsPackable>
+    <Deterministic>False</Deterministic>
   </PropertyGroup>
 
   <ItemGroup>
