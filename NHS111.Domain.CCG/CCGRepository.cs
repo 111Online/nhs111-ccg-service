@@ -1,33 +1,49 @@
-﻿
-namespace NHS111.Domain.CCG {
-    using System.Threading.Tasks;
-    using Microsoft.WindowsAzure.Storage;
-    using Microsoft.WindowsAzure.Storage.Table;
-    using Models;
+﻿using Microsoft.WindowsAzure.Storage;
+using Microsoft.WindowsAzure.Storage.RetryPolicies;
+using Microsoft.WindowsAzure.Storage.Table;
+using NHS111.Domain.CCG.Models;
+using Polly.Retry;
+using System;
+using System.Threading.Tasks;
 
-    public interface ICCGRepository {
+namespace NHS111.Domain.CCG
+{
+    public interface ICCGRepository
+    {
         Task<CCGEntity> Get(string postcode);
     }
 
-    public class CCGRepository
-        : ICCGRepository {
-
+    public class CCGRepository : ICCGRepository
+    {
         private readonly CloudTable _table;
 
-        public CCGRepository(AzureAccountSettings settings) {
+        private readonly AsyncRetryPolicy retryIfException = PolicyFactory.IfException();
 
+        public CCGRepository(IAzureAccountSettings settings)
+        {
             var storageAccount = CloudStorageAccount.Parse(settings.ConnectionString);
-
             var tableClient = storageAccount.CreateCloudTableClient();
+
+            tableClient.DefaultRequestOptions = new TableRequestOptions()
+            {
+                ServerTimeout = TimeSpan.FromMilliseconds(200),
+                MaximumExecutionTime = TimeSpan.FromSeconds(3),
+                RetryPolicy = new LinearRetry(TimeSpan.FromMilliseconds(500), 3),
+                LocationMode = settings.LocationMode
+            };
             _table = tableClient.GetTableReference(settings.CCGTableReference);
         }
 
-        public async Task<CCGEntity> Get(string postcode) {
-            await _table.CreateIfNotExistsAsync();
+        public async Task<CCGEntity> Get(string postcode)
+        {
+            var partitionKey = postcode?.Length > 1 ? postcode.Substring(0, 2).Trim() : "emptypostcode";
 
-            var retrieveOperation = TableOperation.Retrieve<CCGEntity>("Postcodes", postcode);
+            var retrieveOperation = TableOperation.Retrieve<CCGEntity>(partitionKey, postcode);
 
-            var retrievedResult = await _table.ExecuteAsync(retrieveOperation);
+            // Use Polly to retry to catch transient Storage errors
+            var res = await retryIfException.ExecuteAndCaptureAsync(() => _table.ExecuteAsync(retrieveOperation));
+            var retrievedResult = res.Result;
+
             return (CCGEntity)retrievedResult.Result;
         }
     }

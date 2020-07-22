@@ -1,8 +1,7 @@
 {
   "profiles": {
     "NHS111.DataImport.CCG": {
-      "commandName": "Project",
-      "commandLineArgs": ""
+      "commandName": "Project"
     }
   }
 }
