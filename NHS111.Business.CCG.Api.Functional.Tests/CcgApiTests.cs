@@ -54,7 +54,7 @@ namespace NHS111.Business.CCG.Api.Functional.Tests
         {
             var response = await _httpClient.GetAsync($"api/ccg/{postcode}");
             var result = await response.Content.ReadAsStringAsync();
-            Console.Write(result);
+
             Assert.True(response.IsSuccessStatusCode);
             Assert.IsNotNull(result);
             var data = JsonConvert.DeserializeObject<CCGModel>(result);
