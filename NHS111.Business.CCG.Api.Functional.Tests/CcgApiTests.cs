@@ -21,7 +21,7 @@ namespace NHS111.Business.CCG.Api.Functional.Tests
 
             if (string.IsNullOrWhiteSpace(address))
             {
-                address = "https://111-int360-ukw-ccg-api.azurewebsites.net/";
+                address = "";
             }
 
             _httpClient.BaseAddress = new Uri(address);
